@@ -11,7 +11,7 @@ Group=potspot
 WorkingDirectory=/opt/potspot
 EnvironmentFile=/opt/potspot/.env
 Environment=RUST_LOG=info
-ExecStart=/opt/potspot/target/release/potspot-api
+ExecStart=/opt/potspot/backend/target/release/potspot-api
 Restart=always
 RestartSec=10
 StandardOutput=journal
