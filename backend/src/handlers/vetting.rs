@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::auth::middleware::AuthUser;
 use crate::errors::{AppError, AppResult};
-use crate::services::vetting_service;
+use crate::services::{notification_service, vetting_service};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -43,6 +43,26 @@ async fn approve(
     Path(revision_id): Path<uuid::Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
     vetting_service::approve_revision(&state.pool, revision_id, auth.user_id).await?;
+
+    // Notify the revision proposer
+    let proposer: Option<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT proposed_by FROM strain_revisions WHERE id = $1",
+    )
+    .bind(revision_id)
+    .fetch_optional(&state.pool)
+    .await?;
+
+    if let Some(user_id) = proposer {
+        let _ = notification_service::create_notification(
+            &state.pool,
+            user_id,
+            "strain_approved",
+            Some(revision_id),
+            "Your strain edit was approved",
+        )
+        .await;
+    }
+
     Ok(Json(serde_json::json!({ "message": "Revision approved" })))
 }
 
@@ -61,5 +81,25 @@ async fn reject(
     }
 
     vetting_service::reject_revision(&state.pool, revision_id, auth.user_id, &req.reason).await?;
+
+    // Notify the revision proposer
+    let proposer: Option<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT proposed_by FROM strain_revisions WHERE id = $1",
+    )
+    .bind(revision_id)
+    .fetch_optional(&state.pool)
+    .await?;
+
+    if let Some(user_id) = proposer {
+        let _ = notification_service::create_notification(
+            &state.pool,
+            user_id,
+            "strain_rejected",
+            Some(revision_id),
+            &format!("Your strain edit was rejected: {}", req.reason),
+        )
+        .await;
+    }
+
     Ok(Json(serde_json::json!({ "message": "Revision rejected and strain rolled back" })))
 }

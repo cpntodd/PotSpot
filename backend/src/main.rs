@@ -11,6 +11,7 @@ mod db;
 mod errors;
 mod handlers;
 mod models;
+mod ratelimit;
 mod s3;
 mod services;
 mod state;
@@ -50,6 +51,7 @@ async fn main() -> anyhow::Result<()> {
     // Build the application router
     let app = Router::new()
         .nest("/api/v1", handlers::build_router())
+        .layer(axum::middleware::from_fn(ratelimit::rate_limit))
         .with_state(app_state)
         .layer(
             tower_http::cors::CorsLayer::new()

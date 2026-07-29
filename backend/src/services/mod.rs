@@ -5,3 +5,4 @@ pub mod vault_service;
 pub mod comment_service;
 pub mod vetting_service;
 pub mod similarity;
+pub mod notification_service;

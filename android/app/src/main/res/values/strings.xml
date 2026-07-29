@@ -7,6 +7,17 @@
     <string name="disclaimer">
         Cannabis legality varies by jurisdiction. It is your responsibility
         to understand and comply with local laws. PotSpot does not facilitate
-        the purchase, sale, or distribution of cannabis.
+        the purchase, sale, or distribution of cannabis. All strain data is
+        user-contributed and not verified for accuracy.
     </string>
+    <string name="nav_catalog">Catalog</string>
+    <string name="nav_vault">My Vault</string>
+    <string name="nav_profile">Profile</string>
+    <string name="search_hint">Search strains…</string>
+    <string name="filter_all">All</string>
+    <string name="filter_sativa">Sativa</string>
+    <string name="filter_indica">Indica</string>
+    <string name="filter_hybrid">Hybrid</string>
+    <string name="no_saved_strains">No saved strains yet. Browse the catalog and save strains to view them offline.</string>
+    <string name="sign_in">Sign In</string>
 </resources>

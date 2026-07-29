@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::auth::middleware::AuthUser;
 use crate::errors::{AppError, AppResult};
-use crate::services::comment_service;
+use crate::services::{comment_service, notification_service};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -54,6 +54,27 @@ async fn reply(
         &req.body,
     )
     .await?;
+
+    // Notify the parent comment author (unless they're replying to themselves)
+    let parent_author: Option<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM comments WHERE id = $1",
+    )
+    .bind(parent_id)
+    .fetch_optional(&state.pool)
+    .await?;
+
+    if let Some(author_id) = parent_author {
+        if author_id != auth.user_id {
+            let _ = notification_service::create_notification(
+                &state.pool,
+                author_id,
+                "comment_reply",
+                Some(id),
+                &format!("{} replied to your comment", ""), // TODO: fetch display_name
+            )
+            .await;
+        }
+    }
 
     Ok(Json(serde_json::json!({
         "message": "Reply posted",
