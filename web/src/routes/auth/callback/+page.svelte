@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { setTokens } from '$lib/api';
+  import { auth } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
@@ -10,8 +10,7 @@
     const refreshToken = params.get('refresh_token');
 
     if (accessToken && refreshToken) {
-      setTokens(accessToken, refreshToken);
-      // Clean URL and redirect to vault
+      auth.login(accessToken, refreshToken, '');
       goto('/vault', { replaceState: true });
     } else {
       goto('/login?error=oauth_failed', { replaceState: true });
