@@ -125,14 +125,15 @@ pub struct StrainPhoto {
     pub strain_id: Uuid,
     pub user_id: Uuid,
     pub s3_key: String,
-    pub thumbnail_s3_key: Option<String>,
+    pub thumbnail_s3_key: String,
     pub content_type: String,
     pub file_size_bytes: i32,
-    pub width: i32,
-    pub height: i32,
+    pub width: i16,
+    pub height: i16,
     pub is_primary: bool,
     pub average_rating: Option<f64>,
     pub rating_count: i32,
+    #[sqlx(rename = "uploaded_at")]
     pub created_at: DateTime<Utc>,
 }
 

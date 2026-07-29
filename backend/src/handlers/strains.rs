@@ -349,11 +349,7 @@ async fn get_photos(
     let mut result = Vec::new();
     for p in photos {
         let photo_url = crate::s3::presign_get_url(&state.config, &p.s3_key).await.ok();
-        let thumb_url = if let Some(ref tk) = p.thumbnail_s3_key {
-            crate::s3::presign_get_url(&state.config, tk).await.ok()
-        } else {
-            None
-        };
+        let thumb_url = crate::s3::presign_get_url(&state.config, &p.thumbnail_s3_key).await.ok();
         result.push(serde_json::json!({
             "id": p.id,
             "s3_key": p.s3_key,
