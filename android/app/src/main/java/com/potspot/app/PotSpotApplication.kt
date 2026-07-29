@@ -1,20 +1,23 @@
 package com.potspot.app
 
 import android.app.Application
+import com.potspot.app.data.local.PotSpotDatabase
+import com.potspot.app.sync.SyncWorker
 
-/**
- * PotSpot application class.
- * Initializes global dependencies (database, sync manager, etc.).
- */
 class PotSpotApplication : Application() {
+
+    lateinit var database: PotSpotDatabase
+        private set
 
     override fun onCreate() {
         super.onCreate()
         instance = this
 
-        // TODO: Initialize Room database
-        // TODO: Initialize SyncManager
-        // TODO: Set up certificate pinning
+        // Initialize Room database
+        database = PotSpotDatabase.getInstance(this)
+
+        // Schedule periodic catalog sync
+        SyncWorker.schedule(this)
     }
 
     companion object {
