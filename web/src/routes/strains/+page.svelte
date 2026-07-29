@@ -89,11 +89,11 @@
         bind:value={searchQuery}
         on:keydown={(e) => e.key === 'Enter' && handleSearch()}
       />
-      <button class="btn-primary" onclick={handleSearch}>Search</button>
+      <button class="btn-primary" on:click={handleSearch}>Search</button>
     </div>
 
     <div class="filter-row">
-      <select bind:value={filterType} onchange={handleSearch}>
+      <select bind:value={filterType} on:change={handleSearch}>
         <option value="">All Types</option>
         <option value="sativa">Sativa</option>
         <option value="indica">Indica</option>
@@ -130,7 +130,7 @@
         step="0.1"
       />
 
-      <select bind:value={sortBy} onchange={handleSearch}>
+      <select bind:value={sortBy} on:change={handleSearch}>
         <option value="newest">Newest</option>
         <option value="rating">Highest Rated</option>
         <option value="name">Name (A-Z)</option>
@@ -145,7 +145,7 @@
   {:else if error}
     <div class="card" style="text-align: center; color: #e06c75;">
       <p>{error}</p>
-      <button onclick={fetchStrains} style="margin-top: var(--space-md);">Retry</button>
+      <button on:click={fetchStrains} style="margin-top: var(--space-md);">Retry</button>
     </div>
   {:else if strains.length === 0}
     <p class="text-muted" style="text-align: center; padding: var(--space-2xl) 0;">
@@ -165,11 +165,11 @@
     <!-- Pagination -->
     {#if totalPages > 1}
       <div class="pagination">
-        <button disabled={page <= 1} onclick={() => goToPage(page - 1)}>
+        <button disabled={page <= 1} on:click={() => goToPage(page - 1)}>
           Previous
         </button>
         <span class="text-muted">Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onclick={() => goToPage(page + 1)}>
+        <button disabled={page >= totalPages} on:click={() => goToPage(page + 1)}>
           Next
         </button>
       </div>

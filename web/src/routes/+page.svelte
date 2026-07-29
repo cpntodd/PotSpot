@@ -33,7 +33,7 @@
       <p style="margin: var(--space-lg) 0; font-weight: bold;">
         You must be 18 years of age or older to enter.
       </p>
-      <button class="btn-primary" onclick={confirmAge} style="margin-right: var(--space-md);">
+      <button class="btn-primary" on:click={confirmAge} style="margin-right: var(--space-md);">
         I am 18 or older
       </button>
       <a href="https://www.google.com" class="btn">Leave</a>
