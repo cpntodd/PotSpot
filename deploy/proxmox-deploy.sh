@@ -10,7 +10,7 @@
 #   sudo bash deploy/proxmox-deploy.sh
 #
 # What it does:
-#   1. Creates a Debian 12 LXC container (2 CPU, 2GB RAM, 20GB disk)
+#   1. Creates a Debian LXC container (2 CPU, 2GB RAM, 20GB disk)
 #   2. Installs Docker + Docker Compose inside the container
 #   3. Clones the PotSpot repo
 #   4. Generates secure random secrets
@@ -33,7 +33,7 @@ CT_SWAP="${CT_SWAP:-512}"                # MB
 CT_CORES="${CT_CORES:-2}"                # CPU cores
 CT_DISK="${CT_DISK:-20}"                 # GB
 STORAGE="${STORAGE:-local-lvm}"          # Proxmox storage pool
-DEBIAN_TEMPLATE="${DEBIAN_TEMPLATE:-local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst}"
+DEBIAN_TEMPLATE="${DEBIAN_TEMPLATE:-local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst}"
 
 # ============================================================================
 # Colors
@@ -72,11 +72,15 @@ echo -e "${GREEN}  Proxmox host verified.${NC}"
 # ============================================================================
 # Step 1: Download Debian template if needed
 # ============================================================================
-echo -e "${YELLOW}[2/7] Checking Debian 12 template...${NC}"
-if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
-    echo "  Downloading template..."
-    pveam update
-    pveam download local debian-12-standard_12.7-1_amd64.tar.zst
+echo -e "${YELLOW}[2/7] Checking Debian template...${NC}"
+if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-13"; then
+    echo "  Debian 13 template not found, trying Debian 12..."
+    if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
+        echo "  Downloading templates..."
+        pveam update
+        pveam download local debian-13-standard_13.0-1_amd64.tar.zst 2>/dev/null || \
+        pveam download local debian-12-standard_12.7-1_amd64.tar.zst
+    fi
 fi
 echo -e "${GREEN}  Template ready.${NC}"
 

@@ -46,7 +46,7 @@ This interactive script follows the community-scripts pattern:
 
 ### Option C: Automated Proxmox CT creation
 
-From your Proxmox host, creates a fresh Debian 12 LXC and deploys PotSpot into it:
+From your Proxmox host, creates a fresh Debian LXC and deploys PotSpot into it:
 
 ```bash
 export DOMAIN=potspot.yourdomain.com
@@ -73,14 +73,14 @@ curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh
 | CPU | 1 core | 2-4 cores |
 | RAM | 1 GB | 2-4 GB |
 | Disk | 10 GB | 20+ GB |
-| OS | Debian 12 | Debian 12 |
+| OS | Debian 12+ | Debian 13 |
 
 ---
 
 ## Native Debian Install (No Docker)
 
 Installs PotSpot directly on the OS: Rust, Node.js, PostgreSQL, Caddy, systemd.
-Best for bare-metal Debian 12 servers or LXCs where you don't want container overhead.
+Best for bare-metal Debian 12+ servers or LXCs where you don't want container overhead.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/native-install.sh | sudo bash

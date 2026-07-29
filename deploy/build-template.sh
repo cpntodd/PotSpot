@@ -3,7 +3,7 @@
 # Run this ON THE PROXMOX HOST to create a pre-built PotSpot appliance template.
 #
 # What it does:
-#   1. Creates a temporary Debian 12 LXC
+#   1. Creates a temporary Debian LXC (13 Trixie by default, falls back to 12)
 #   2. Installs Docker + Docker Compose
 #   3. Clones PotSpot and pre-builds all Docker images
 #   4. Places a first-boot init script (no secrets pre-baked)
@@ -33,7 +33,8 @@ CT_CORES="${CT_CORES:-2}"
 CT_DISK="${CT_DISK:-20}"                      # GB
 CT_ROOT_PASSWORD="${CT_ROOT_PASSWORD:-templatebuild}"
 STORAGE="${STORAGE:-local-lvm}"
-DEBIAN_TEMPLATE="${DEBIAN_TEMPLATE:-local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst}"
+DEBIAN_TEMPLATE="${DEBIAN_TEMPLATE:-local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst}"
+DEBIAN_TEMPLATE_FALLBACK="local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
 
 # ============================================================================
 # Colors
@@ -69,11 +70,17 @@ echo -e "${GREEN}  Proxmox host verified.${NC}"
 # ============================================================================
 # Step 1: Download Debian template if needed
 # ============================================================================
-echo -e "${YELLOW}[2/7] Checking Debian 12 template...${NC}"
-if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
-    echo "  Downloading template..."
-    pveam update
-    pveam download local debian-12-standard_12.7-1_amd64.tar.zst
+echo -e "${YELLOW}[2/7] Checking Debian template...${NC}"
+# Prefer Debian 13 (Trixie), fall back to Debian 12 (Bookworm)
+TEMPLATE_NAME_SHORT=$(echo "$DEBIAN_TEMPLATE" | grep -oP 'debian-\d+' || echo "debian-13")
+if ! pveam list "$STORAGE" 2>/dev/null | grep -q "$TEMPLATE_NAME_SHORT"; then
+    echo "  ${TEMPLATE_NAME_SHORT} not found, trying fallback..."
+    if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
+        echo "  Downloading Debian template..."
+        pveam update
+        pveam download local debian-13-standard_13.0-1_amd64.tar.zst 2>/dev/null || \
+        pveam download local debian-12-standard_12.7-1_amd64.tar.zst
+    fi
 fi
 echo -e "${GREEN}  Template ready.${NC}"
 

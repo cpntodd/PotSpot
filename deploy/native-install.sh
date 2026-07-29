@@ -1,6 +1,6 @@
 #!/bin/bash
-# PotSpot -- Native Debian 12 Install Script
-# Installs PotSpot directly on the OS (no Docker required).
+# PotSpot -- Native Debian Install Script
+# Installs PotSpot directly on Debian 12+ (Bookworm, Trixie, or newer).
 #
 # What this installs:
 #   - Rust (via rustup)        -- to compile the API
@@ -49,9 +49,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-if ! grep -q "12" /etc/debian_version 2>/dev/null; then
-    echo -e "${YELLOW}Warning: This script is designed for Debian 12 (Bookworm).${NC}"
-    echo -e "${YELLOW}Detected: $(cat /etc/debian_version 2>/dev/null || echo 'unknown')${NC}"
+# Check Debian version (12 Bookworm, 13 Trixie, or newer)
+DEBIAN_VERSION=$(cat /etc/debian_version 2>/dev/null || echo '0')
+DEBIAN_MAJOR="${DEBIAN_VERSION%%.*}"
+if [[ -z "$DEBIAN_MAJOR" ]] || [[ "$DEBIAN_MAJOR" -lt 12 ]]; then
+    echo -e "${YELLOW}Warning: Debian 12+ required. Detected: ${DEBIAN_VERSION}${NC}"
     echo -n "Continue anyway? (y/N): "
     read -r cont < /dev/tty
     if [[ ! "${cont,,}" =~ ^(y|yes)$ ]]; then
