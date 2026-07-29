@@ -1,0 +1,104 @@
+# PotSpot -- Production Docker Compose
+# Deploy anywhere: Portainer stack, docker compose, Docker Swarm, etc.
+#
+# Quick start:
+#   1. cp .env.example .env
+#   2. Edit .env with your domain and secrets
+#   3. docker compose up -d --build
+#
+# Portainer (Stack from Git):
+#   Repository URL:  https://github.com/cpntodd/PotSpot.git
+#   Compose path:    docker-compose.yml
+#   Env vars:        copy from .env.example into Stack -> Environment variables
+
+services:
+  # --- Reverse Proxy (Caddy) ---
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${CADDY_HTTP_PORT:-8080}:80"
+      - "${CADDY_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - ./web/build:/srv/web:ro
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # --- Frontend Builder (one-shot, deploys to ./web/build) ---
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    volumes:
+      - ./web/build:/output
+    restart: "no"
+
+  # --- API (Rust/Axum) ---
+  api:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?err}
+      JWT_SECRET: ${JWT_SECRET:?err}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?err}
+      PUBLIC_URL: ${PUBLIC_URL:-https://potspot.example.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://potspot.example.com}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?err}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?err}
+      MINIO_BUCKET: potspot-photos
+      RUST_LOG: ${RUST_LOG:-info}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      web:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # --- Database (PostgreSQL) ---
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?err}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
+      POSTGRES_DB: ${POSTGRES_DB:?err}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Object Storage (MinIO) ---
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?err}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?err}
+    volumes:
+      - miniodata:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
+  caddy_data:
+  web_build:

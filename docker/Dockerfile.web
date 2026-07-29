@@ -1,0 +1,21 @@
+# Stage 1: Build SvelteKit static site
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Cache dependencies
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+# Build source
+COPY web/ .
+RUN npm run build
+
+# Stage 2: Lightweight deploy container (one-shot)
+FROM alpine:3.20
+
+COPY --from=builder /app/build /app/build
+COPY docker/web-deploy.sh /web-deploy.sh
+RUN chmod +x /web-deploy.sh
+
+CMD ["/web-deploy.sh"]
