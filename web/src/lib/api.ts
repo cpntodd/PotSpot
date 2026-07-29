@@ -42,6 +42,16 @@ export function getAccessToken(): string | null {
   return tokenStore.accessToken;
 }
 
+/** Ensure a valid access token, refreshing if necessary. */
+export async function getValidToken(): Promise<string | null> {
+  if (tokenStore.accessToken) return tokenStore.accessToken;
+  if (tokenStore.refreshToken) {
+    const ok = await refreshAccessToken();
+    if (ok) return tokenStore.accessToken;
+  }
+  return null;
+}
+
 /** Check if user has a session (refresh token exists). */
 export function hasSession(): boolean {
   return tokenStore.refreshToken !== null;

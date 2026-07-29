@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { apiRequest } from '$lib/api';
+  import { apiRequest, getValidToken } from '$lib/api';
   import { isLoggedIn } from '$lib/stores/auth';
   import { page } from '$app/stores';
   import type { StrainDetail, StrainSummary } from '$lib/types';
@@ -80,24 +80,25 @@
     interactiveError = '';
     photoUploading = true;
     try {
+      const token = await getValidToken();
+      if (!token) throw new Error('Authentication required');
       const form = new FormData();
       form.append('file', file);
-      await fetch(`/api/v1/strains/${$page.params.id}/photos`, {
+      const res = await fetch(`/api/v1/strains/${$page.params.id}/photos`, {
         method: 'POST',
         body: form,
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      await fetchStrain(); // refresh for new photo
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: { message: 'Upload failed' } }));
+        throw new Error(err.error?.message || 'Upload failed');
+      }
+      await fetchStrain();
     } catch (e: unknown) {
       interactiveError = e instanceof Error ? e.message : 'Upload failed';
     } finally {
       photoUploading = false;
     }
-  }
-
-  async function getToken(): Promise<string> {
-    const { getAccessToken } = await import('$lib/api');
-    return getAccessToken() || '';
   }
 
   import { onMount } from 'svelte';
