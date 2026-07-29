@@ -66,6 +66,7 @@ a:hover {
 }
 
 button, .btn {
+  display: inline-block;
   font-family: var(--font-body);
   font-size: 0.875rem;
   padding: var(--space-sm) var(--space-lg);
