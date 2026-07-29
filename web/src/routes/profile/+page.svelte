@@ -47,6 +47,12 @@
   let bioDraft = '';
   let displayNameDraft = '';
 
+  // Tab data
+  let comments: any[] = [];
+  let reviews: any[] = [];
+  let savedStrains: StrainItem[] = [];
+  let tabLoading = false;
+
   $: if (!$isLoggedIn) {
     goto('/login');
   }
@@ -63,7 +69,7 @@
       auth.setDisplayName(profile.display_name);
       bioDraft = profile.bio || '';
       displayNameDraft = profile.display_name;
-      await loadStrains();
+      await switchTab('strains');
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Failed to load profile';
       if (error.includes('401')) {
@@ -75,8 +81,27 @@
     }
   }
 
-  async function loadStrains() {
-    strainsLoading = true;
+  async function loadTabData(tab: string) {
+    tabLoading = true;
+    try {
+      if (tab === 'comments') {
+        const data = await apiRequest<{ comments: any[] }>('/profile/comments');
+        comments = data.comments || [];
+      } else if (tab === 'reviews') {
+        const data = await apiRequest<{ reviews: any[] }>('/profile/reviews');
+        reviews = data.reviews || [];
+      } else if (tab === 'saved') {
+        const data = await apiRequest<{ saved: StrainItem[] }>('/profile/saved');
+        savedStrains = data.saved || [];
+      }
+    } catch { /* non-critical */ }
+    finally { tabLoading = false; }
+  }
+
+  function switchTab(tab: string) {
+    activeTab = tab;
+    loadTabData(tab);
+  }
     try {
       const data = await apiRequest<{ public: StrainItem[] | null; private: StrainItem[] | null }>(
         `/profile/strains?type=${strainFilter}`
@@ -239,10 +264,10 @@
 
         <div class="content-area">
           <div class="tab-bar">
-            <button class="tab" class:active={activeTab === 'strains'} on:click={() => (activeTab = 'strains')}>My Strains</button>
-            <button class="tab" class:active={activeTab === 'comments'} on:click={() => (activeTab = 'comments')}>Comments</button>
-            <button class="tab" class:active={activeTab === 'reviews'} on:click={() => (activeTab = 'reviews')}>Reviews</button>
-            <button class="tab" class:active={activeTab === 'saved'} on:click={() => (activeTab = 'saved')}>Saved</button>
+            <button class="tab" class:active={activeTab === 'strains'} on:click={() => switchTab('strains')}>My Strains</button>
+            <button class="tab" class:active={activeTab === 'comments'} on:click={() => switchTab('comments')}>Comments</button>
+            <button class="tab" class:active={activeTab === 'reviews'} on:click={() => switchTab('reviews')}>Reviews</button>
+            <button class="tab" class:active={activeTab === 'saved'} on:click={() => switchTab('saved')}>Saved</button>
           </div>
 
           {#if activeTab === 'strains'}
@@ -274,6 +299,49 @@
                   </a>
                 {:else}
                   <p class="text-muted">No strains yet.</p>
+                {/each}
+              </div>
+            {/if}
+          {:else if activeTab === 'comments'}
+            {#if tabLoading}<p>Loading...</p>
+            {:else if comments.length === 0}<p class="text-muted" style="padding: var(--space-lg);">No comments yet.</p>
+            {:else}
+              <div class="list-content">
+                {#each comments as c}
+                  <div class="card list-item">
+                    <p>{c.body}</p>
+                    <p class="text-muted" style="font-size:0.75rem;">
+                      <a href="/strains/{c.strain_id}">View strain</a> &middot; {new Date(c.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          {:else if activeTab === 'reviews'}
+            {#if tabLoading}<p>Loading...</p>
+            {:else if reviews.length === 0}<p class="text-muted" style="padding: var(--space-lg);">No reviews yet.</p>
+            {:else}
+              <div class="list-content">
+                {#each reviews as r}
+                  <div class="card list-item">
+                    <p>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                    <p class="text-muted" style="font-size:0.75rem;">
+                      <a href="/strains/{r.strain_id}">View strain</a> &middot; {new Date(r.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          {:else if activeTab === 'saved'}
+            {#if tabLoading}<p>Loading...</p>
+            {:else if savedStrains.length === 0}<p class="text-muted" style="padding: var(--space-lg);">No saved strains.</p>
+            {:else}
+              <div class="strain-grid">
+                {#each savedStrains as strain (strain.id)}
+                  <a href="/strains/{strain.id}" class="card strain-card">
+                    <span class="strain-type-badge type-{strain.strain_type}">{strain.strain_type}</span>
+                    <h4>{strain.name}</h4>
+                  </a>
                 {/each}
               </div>
             {/if}

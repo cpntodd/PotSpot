@@ -15,6 +15,9 @@ pub fn router() -> Router<AppState> {
         .route("/", put(update_profile))
         .route("/stats", get(stats))
         .route("/strains", get(my_strains))
+        .route("/comments", get(my_comments))
+        .route("/reviews", get(my_reviews))
+        .route("/saved", get(my_saved))
         .route("/avatar", post(upload_avatar))
         .route("/banner", post(upload_banner))
 }
@@ -296,4 +299,85 @@ async fn get_user_stats(
         reviews,
         saved_strains,
     })
+}
+
+/// GET /api/v1/profile/comments
+async fn my_comments(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let comments = sqlx::query_as::<_, (uuid::Uuid, String, uuid::Uuid, chrono::DateTime<chrono::Utc>)>(
+        "SELECT c.id, c.body, c.strain_id, c.created_at \
+         FROM comments c \
+         WHERE c.user_id = $1 AND c.is_deleted = false \
+         ORDER BY c.created_at DESC LIMIT 50",
+    )
+    .bind(auth.user_id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let list: Vec<serde_json::Value> = comments
+        .into_iter()
+        .map(|(id, body, strain_id, created_at)| {
+            serde_json::json!({
+                "id": id,
+                "body": body,
+                "strain_id": strain_id,
+                "created_at": created_at,
+            })
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({ "comments": list })))
+}
+
+/// GET /api/v1/profile/reviews
+async fn my_reviews(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let reviews = sqlx::query_as::<_, (uuid::Uuid, uuid::Uuid, i16, chrono::DateTime<chrono::Utc>)>(
+        "SELECT id, strain_id, rating, created_at \
+         FROM strain_ratings WHERE user_id = $1 \
+         ORDER BY created_at DESC LIMIT 50",
+    )
+    .bind(auth.user_id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let list: Vec<serde_json::Value> = reviews
+        .into_iter()
+        .map(|(id, strain_id, rating, created_at)| {
+            serde_json::json!({
+                "id": id,
+                "strain_id": strain_id,
+                "rating": rating,
+                "created_at": created_at,
+            })
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({ "reviews": list })))
+}
+
+/// GET /api/v1/profile/saved
+async fn my_saved(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let saved = sqlx::query_as::<_, crate::models::StrainSummary>(
+        r#"SELECT ps.id, ps.name, ps.type::text AS strain_type,
+                  ps.thc_percentage::float8, ps.cbd_percentage::float8,
+                  ps.average_rating::float8, ps.rating_count,
+                  ps.created_at
+           FROM public_strains ps
+           JOIN saved_strains ss ON ss.strain_id = ps.id
+           WHERE ss.user_id = $1 AND ps.is_active = true
+           ORDER BY ss.created_at DESC LIMIT 50"#,
+    )
+    .bind(auth.user_id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    Ok(Json(serde_json::json!({ "saved": saved })))
 }
