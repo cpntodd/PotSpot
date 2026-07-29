@@ -28,8 +28,9 @@ struct RejectBody {
 /// List all pending revisions. Vetter+ role required.
 async fn queue(
     State(state): State<AppState>,
-    _auth: AuthUser, // TODO: enforce vetter+ role via middleware
+    auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_vetter()?;
     let revisions = vetting_service::get_pending_queue(&state.pool).await?;
     Ok(Json(serde_json::to_value(revisions).map_err(|e| AppError::Internal(e.into()))?))
 }
@@ -42,6 +43,7 @@ async fn approve(
     auth: AuthUser,
     Path(revision_id): Path<uuid::Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_vetter()?;
     vetting_service::approve_revision(&state.pool, revision_id, auth.user_id).await?;
 
     // Notify the revision proposer
@@ -76,6 +78,7 @@ async fn reject(
     Path(revision_id): Path<uuid::Uuid>,
     Json(req): Json<RejectBody>,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_vetter()?;
     if req.reason.trim().is_empty() {
         return Err(AppError::BadRequest("Rejection reason is required".into()));
     }

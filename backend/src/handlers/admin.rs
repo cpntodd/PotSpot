@@ -55,10 +55,11 @@ async fn list_users(
 /// Change a user's role. Admin only.
 async fn set_role(
     State(state): State<AppState>,
-    _auth: AuthUser, // TODO: enforce admin role via middleware
+    auth: AuthUser,
     Path(user_id): Path<uuid::Uuid>,
     Json(req): Json<SetRoleBody>,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_admin()?;
     // Validate role
     let valid_roles = ["user", "vetter", "admin"];
     if !valid_roles.contains(&req.role.as_str()) {

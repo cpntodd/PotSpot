@@ -88,3 +88,20 @@ impl FromRequestParts<AppState> for AuthUser {
     }
 }
 
+impl AuthUser {
+    /// Require admin role. Returns Forbidden if not admin.
+    pub fn require_admin(&self) -> Result<(), AppError> {
+        if self.role != UserRole::Admin {
+            return Err(AppError::Forbidden);
+        }
+        Ok(())
+    }
+
+    /// Require vetter role or higher. Returns Forbidden if not vetter/admin.
+    pub fn require_vetter(&self) -> Result<(), AppError> {
+        if self.role != UserRole::Vetter && self.role != UserRole::Admin {
+            return Err(AppError::Forbidden);
+        }
+        Ok(())
+    }
+}
