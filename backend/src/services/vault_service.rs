@@ -29,13 +29,13 @@ pub async fn list_vault(
     // Fetch saved public strains
     let saved = sqlx::query_as::<_, StrainSummaryRow>(
         r#"SELECT ps.id, ps.name, ps.type::text AS strain_type,
-                  ps.thc_percentage, ps.cbd_percentage,
-                  ps.average_rating, ps.rating_count,
+                  ps.thc_percentage::float8, ps.cbd_percentage::float8,
+                  ps.average_rating::float8, ps.rating_count,
                   ps.created_at
            FROM public_strains ps
-           JOIN user_saved_strains uss ON uss.strain_id = ps.id
-           WHERE uss.user_id = $1 AND ps.is_active = true
-           ORDER BY uss.saved_at DESC"#,
+           JOIN saved_strains ss ON ss.strain_id = ps.id
+           WHERE ss.user_id = $1 AND ps.is_active = true
+           ORDER BY ss.created_at DESC"#,
     )
     .bind(user_id)
     .fetch_all(pool)
