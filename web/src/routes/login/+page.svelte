@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { apiRequest, setTokens, hasSession } from '$lib/api';
+  import { apiRequest } from '$lib/api';
+  import { auth } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
   import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
@@ -20,7 +21,7 @@
         method: 'POST',
         body: { email, password },
       });
-      setTokens(data.access_token, data.refresh_token);
+      auth.login(data.access_token, data.refresh_token, data.user.display_name);
       goto('/vault');
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Login failed';

@@ -1,13 +1,16 @@
 <script lang="ts">
   import '../app.css';
-
-  // Check for existing session on mount
-  import { restoreSession } from '$lib/api';
+  import { auth, isLoggedIn } from '$lib/stores/auth';
   import { onMount } from 'svelte';
 
   onMount(() => {
-    restoreSession();
+    auth.init();
   });
+
+  function handleLogout() {
+    auth.logout();
+    window.location.href = '/';
+  }
 </script>
 
 <header class="site-header">
@@ -16,7 +19,12 @@
     <nav>
       <a href="/strains">Catalog</a>
       <a href="/vault">My Vault</a>
-      <a href="/login">Sign In</a>
+      {#if $isLoggedIn}
+        <a href="/profile">My Profile</a>
+        <button class="link-btn" on:click={handleLogout}>Log Off</button>
+      {:else}
+        <a href="/login">Sign In</a>
+      {/if}
     </nav>
   </div>
 </header>

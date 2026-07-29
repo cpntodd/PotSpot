@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { apiRequest, setTokens } from '$lib/api';
+  import { apiRequest } from '$lib/api';
+  import { auth } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
   import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
@@ -26,7 +27,7 @@
         method: 'POST',
         body: { email, password, display_name: displayName, date_of_birth: dateOfBirth },
       });
-      setTokens(data.access_token, data.refresh_token);
+      auth.login(data.access_token, data.refresh_token, displayName);
       goto('/vault');
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Registration failed';
