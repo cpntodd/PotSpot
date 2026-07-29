@@ -12,6 +12,8 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 # Configuration -- provide via environment or edit below
 DOMAIN="${DOMAIN:-potspot.example.com}"
 POTSPOT_DIR="${POTSPOT_DIR:-/opt/potspot}"
+CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-8080}"
+CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}"
 
 echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  PotSpot -- Container Setup${NC}"
@@ -78,6 +80,8 @@ MINIO_SECRET_KEY=$(openssl rand -hex 16)
 MINIO_BUCKET=potspot-photos
 PUBLIC_URL=https://$DOMAIN
 CORS_ORIGIN=https://$DOMAIN
+CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
+CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
 GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
 ENVEOF
@@ -94,7 +98,8 @@ echo -e "${GREEN}  Repository ready.${NC}"
 # ============================================================================
 echo -e "${YELLOW}[3/4] Building and starting containers...${NC}"
 cd "$POTSPOT_DIR"
-docker compose -f docker/docker-compose.prod.yml up -d --build
+CADDY_HTTP_PORT="${CADDY_HTTP_PORT}" CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT}" \
+  docker compose -f docker/docker-compose.prod.yml up -d --build
 
 echo -e "${GREEN}  Containers started.${NC}"
 
@@ -123,6 +128,10 @@ echo -e "${GREEN}  PotSpot is running!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "  Domain:    ${YELLOW}https://$DOMAIN${NC}"
+if [[ "${CADDY_HTTP_PORT}" != "80" ]]; then
+  echo -e "  HTTP port: ${YELLOW}${CADDY_HTTP_PORT}${NC} (reverse proxy target)"
+  echo -e "  HTTPS port:${YELLOW}${CADDY_HTTPS_PORT}${NC}"
+fi
 echo -e "  Directory: ${YELLOW}$POTSPOT_DIR${NC}"
 echo ""
 echo "  Useful commands:"

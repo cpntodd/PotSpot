@@ -25,6 +25,8 @@ CT_ID="${CT_ID:-200}"                    # LXC container ID
 CT_HOSTNAME="${CT_HOSTNAME:-potspot}"     # Container hostname
 CT_ROOT_PASSWORD="${CT_ROOT_PASSWORD:-}"  # Leave empty to auto-generate
 DOMAIN="${DOMAIN:-potspot.example.com}"   # Your domain pointing to the CT's IP
+CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-8080}" # Caddy HTTP port (change if 80 is free)
+CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}" # Caddy HTTPS port (change if 443 is free)
 CT_IP="${CT_IP:-dhcp}"                   # IP address or "dhcp"
 CT_MEMORY="${CT_MEMORY:-2048}"           # MB
 CT_SWAP="${CT_SWAP:-512}"                # MB
@@ -163,6 +165,8 @@ MINIO_SECRET_KEY=$(openssl rand -hex 16)
 MINIO_BUCKET=potspot-photos
 PUBLIC_URL=https://$DOMAIN
 CORS_ORIGIN=https://$DOMAIN
+CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
+CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 ENVEOF
 
     # Update Caddyfile with the real domain
@@ -181,7 +185,8 @@ echo -e "${YELLOW}[6/7] Building and starting PotSpot...${NC}"
 pct exec "$CT_ID" -- bash -c '
     set -e
     cd /opt/potspot
-    docker compose -f docker/docker-compose.prod.yml up -d --build
+    CADDY_HTTP_PORT="${CADDY_HTTP_PORT}" CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT}" \
+      docker compose -f docker/docker-compose.prod.yml up -d --build
 '
 
 echo -e "${GREEN}  Containers starting...${NC}"
@@ -213,6 +218,8 @@ echo ""
 echo -e "  Container ID:    ${YELLOW}$CT_ID${NC}"
 echo -e "  Hostname:        ${YELLOW}$CT_HOSTNAME${NC}"
 echo -e "  Domain:          ${YELLOW}https://$DOMAIN${NC}"
+echo -e "  HTTP port:       ${YELLOW}${CADDY_HTTP_PORT}${NC}"
+echo -e "  HTTPS port:      ${YELLOW}${CADDY_HTTPS_PORT}${NC}"
 echo -e "  Root password:   ${YELLOW}$CT_ROOT_PASSWORD${NC}"
 echo ""
 echo -e "  ${GREEN}Next steps:${NC}"

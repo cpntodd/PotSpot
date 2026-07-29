@@ -148,6 +148,14 @@ function install() {
   echo -e "${TAB}${YW}Enter Google OAuth Client Secret (leave blank to skip):${CL}"
   read -r GOOGLE_CLIENT_SECRET
 
+  # Prompt for Caddy ports (defaults avoid collision with NPM/nginx on 80/443)
+  echo -e "${TAB}${YW}Enter HTTP port for Caddy [8080]:${CL}"
+  read -r CADDY_HTTP_PORT
+  CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-8080}"
+  echo -e "${TAB}${YW}Enter HTTPS port for Caddy [8443]:${CL}"
+  read -r CADDY_HTTPS_PORT
+  CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}"
+
   msg_info "Cloning ${APP} repository"
   if [[ -d "$INSTALL_PATH" ]]; then
     rm -rf "$INSTALL_PATH"
@@ -175,6 +183,8 @@ MINIO_SECRET_KEY=${MINIO_SECRET}
 MINIO_BUCKET=potspot-photos
 PUBLIC_URL=https://${DOMAIN}
 CORS_ORIGIN=https://${DOMAIN}
+CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
+CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
 GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
 ENVEOF
@@ -187,7 +197,8 @@ ENVEOF
 
   msg_info "Building and starting ${APP}"
   cd "$INSTALL_PATH"
-  $STD docker compose -f "$COMPOSE_FILE" up -d --build --progress=plain
+  CADDY_HTTP_PORT="${CADDY_HTTP_PORT}" CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT}" \
+    $STD docker compose -f "$COMPOSE_FILE" up -d --build --progress=plain
   msg_ok "Started ${APP}"
 
   # Create update script
@@ -213,6 +224,11 @@ UPDATEEOF
 
   echo ""
   msg_ok "${APP} is reachable at: ${BL}https://${DOMAIN}${CL}"
+  if [[ "${CADDY_HTTP_PORT:-8080}" != "80" ]]; then
+    echo -e "${TAB}${INFO} Caddy is on non-standard ports. Point your reverse proxy at:"
+    echo -e "${TAB}  HTTP:  localhost:${CADDY_HTTP_PORT:-8080}"
+    echo -e "${TAB}  HTTPS: localhost:${CADDY_HTTPS_PORT:-8443}"
+  fi
   echo ""
   echo -e "${TAB}${INFO} Useful commands:"
   echo -e "${TAB}  cd ${INSTALL_PATH}"
