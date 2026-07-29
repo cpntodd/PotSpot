@@ -100,8 +100,12 @@
 
   function switchTab(tab: string) {
     activeTab = tab;
-    loadTabData(tab);
+    if (tab === 'strains') loadStrains();
+    else loadTabData(tab);
   }
+
+  async function loadStrains() {
+    strainsLoading = true;
     try {
       const data = await apiRequest<{ public: StrainItem[] | null; private: StrainItem[] | null }>(
         `/profile/strains?type=${strainFilter}`
