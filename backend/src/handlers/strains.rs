@@ -9,7 +9,7 @@ use crate::errors::{AppError, AppResult};
 use crate::models::{
     CreateStrainRequest, RateStrainRequest, StrainListResponse, StrainSearchQuery, UpdateStrainRequest,
 };
-use crate::services::{comment_service, strain_service};
+use crate::services::{comment_service, strain_service, vetting_service};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -23,6 +23,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/similar", get(similar))
         .route("/{id}/comments", get(get_comments))
         .route("/{id}/comments", post(post_comment))
+        .route("/{id}/revisions", get(get_revisions))
 }
 
 /// GET /api/v1/strains
@@ -244,6 +245,15 @@ async fn post_comment(
         "message": "Comment posted",
         "id": id,
     })))
+}
+
+/// GET /api/v1/strains/:id/revisions
+async fn get_revisions(
+    State(state): State<AppState>,
+    Path(strain_id): Path<uuid::Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    let revisions = vetting_service::get_version_history(&state.pool, strain_id).await?;
+    Ok(Json(serde_json::to_value(revisions).map_err(|e| AppError::Internal(e.into()))?))
 }
 
 /// GET /api/v1/strains/:id/similar
