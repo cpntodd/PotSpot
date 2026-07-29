@@ -30,7 +30,7 @@ pub struct PublicStrain {
 }
 
 /// Summary view of a strain for list/search results.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize)]
 pub struct StrainSummary {
     pub id: Uuid,
     pub name: String,
@@ -39,7 +39,11 @@ pub struct StrainSummary {
     pub cbd_percentage: Option<f64>,
     pub average_rating: Option<f64>,
     pub rating_count: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub thumbnail_url: Option<String>,
+    #[sqlx(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 /// Full detail view of a strain.

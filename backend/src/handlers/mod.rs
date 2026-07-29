@@ -6,6 +6,7 @@ pub mod vetting;
 pub mod photos;
 pub mod admin;
 pub mod notifications;
+pub mod profile;
 
 use axum::Router;
 
@@ -30,4 +31,6 @@ pub fn build_router() -> Router<AppState> {
         .nest("/admin", admin::router())
         // Notification routes
         .nest("/notifications", notifications::router())
+        // Profile routes
+        .nest("/profile", profile::router())
 }

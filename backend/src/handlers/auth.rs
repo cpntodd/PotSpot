@@ -95,6 +95,9 @@ async fn register(
         id: user_id,
         display_name: req.display_name,
         role: "user".into(),
+        bio: None,
+        avatar_url: None,
+        banner_url: None,
         created_at: now,
     };
 
@@ -115,7 +118,8 @@ async fn login(
     // Look up user by email
     let user = sqlx::query_as::<_, crate::models::User>(
         "SELECT id, email, password_hash, display_name, role::text, \
-                age_verified, date_of_birth, created_at, updated_at \
+                age_verified, date_of_birth, avatar_s3_key, banner_s3_key, bio, \
+                created_at, updated_at \
          FROM users WHERE email = $1 AND deleted_at IS NULL",
     )
     .bind(req.email.to_lowercase())
@@ -152,6 +156,9 @@ async fn login(
         id: user.id,
         display_name: user.display_name,
         role: user.role,
+        bio: user.bio,
+        avatar_url: None, // generated on-demand by profile endpoint
+        banner_url: None,
         created_at: user.created_at,
     };
 
@@ -215,6 +222,9 @@ async fn refresh(
         id: user_id,
         display_name,
         role,
+        bio: None,
+        avatar_url: None,
+        banner_url: None,
         created_at,
     };
 
@@ -291,7 +301,8 @@ async fn profile(
 ) -> AppResult<Json<serde_json::Value>> {
     let user = sqlx::query_as::<_, crate::models::User>(
         "SELECT id, email, password_hash, display_name, role::text, \
-                age_verified, date_of_birth, created_at, updated_at \
+                age_verified, date_of_birth, avatar_s3_key, banner_s3_key, bio, \
+                created_at, updated_at \
          FROM users WHERE id = $1",
     )
     .bind(auth.user_id)

@@ -52,6 +52,7 @@ pub async fn list_vault(
             average_rating: r.average_rating,
             rating_count: r.rating_count,
             thumbnail_url: None,
+            created_at: None,
         })
         .collect();
 
