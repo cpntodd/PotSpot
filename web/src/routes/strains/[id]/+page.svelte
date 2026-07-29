@@ -1,5 +1,6 @@
 <script lang="ts">
   import { apiRequest } from '$lib/api';
+  import { isLoggedIn } from '$lib/stores/auth';
   import { page } from '$app/stores';
   import type { StrainDetail, StrainSummary } from '$lib/types';
   import StrainCard from '$lib/components/StrainCard.svelte';
@@ -10,6 +11,16 @@
   let error: string | null = null;
   let similarStrains: StrainSummary[] = [];
 
+  // Interactive state
+  let userRating = 0;
+  let ratingSubmitting = false;
+  let commentBody = '';
+  let commentSubmitting = false;
+  let comments: any[] = [];
+  let commentsLoading = false;
+  let photoUploading = false;
+  let interactiveError = '';
+
   async function fetchStrain() {
     loading = true;
     error = null;
@@ -19,11 +30,74 @@
       strain = await apiRequest<StrainDetail>(`/strains/${id}`);
       // Fetch similar strains in parallel
       similarStrains = await apiRequest<StrainSummary[]>(`/strains/${id}/similar`);
+      comments = await apiRequest<any[]>(`/strains/${id}/comments`);
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Failed to load strain';
     } finally {
       loading = false;
     }
+  }
+
+  async function submitRating(rating: number) {
+    interactiveError = '';
+    ratingSubmitting = true;
+    try {
+      await apiRequest(`/strains/${$page.params.id}/rate`, {
+        method: 'POST',
+        body: { rating },
+      });
+      userRating = rating;
+      await fetchStrain(); // refresh for updated average
+    } catch (e: unknown) {
+      interactiveError = e instanceof Error ? e.message : 'Rating failed';
+    } finally {
+      ratingSubmitting = false;
+    }
+  }
+
+  async function submitComment() {
+    if (!commentBody.trim()) return;
+    interactiveError = '';
+    commentSubmitting = true;
+    try {
+      await apiRequest(`/strains/${$page.params.id}/comments`, {
+        method: 'POST',
+        body: { body: commentBody.trim() },
+      });
+      commentBody = '';
+      comments = await apiRequest<any[]>(`/strains/${$page.params.id}/comments`);
+    } catch (e: unknown) {
+      interactiveError = e instanceof Error ? e.message : 'Comment failed';
+    } finally {
+      commentSubmitting = false;
+    }
+  }
+
+  async function uploadPhoto(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    interactiveError = '';
+    photoUploading = true;
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      await fetch(`/api/v1/strains/${$page.params.id}/photos`, {
+        method: 'POST',
+        body: form,
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+      await fetchStrain(); // refresh for new photo
+    } catch (e: unknown) {
+      interactiveError = e instanceof Error ? e.message : 'Upload failed';
+    } finally {
+      photoUploading = false;
+    }
+  }
+
+  async function getToken(): Promise<string> {
+    const { getAccessToken } = await import('$lib/api');
+    return getAccessToken() || '';
   }
 
   import { onMount } from 'svelte';
@@ -207,6 +281,72 @@
       </section>
     {/if}
 
+    <!-- Interactive: Rating, Comment, Photo (logged in only) -->
+    {#if $isLoggedIn}
+      <section class="section interactive-section">
+        <h2>Rate & Review</h2>
+
+        {#if interactiveError}
+          <p style="color: #e06c75; font-size: 0.875rem;">{interactiveError}</p>
+        {/if}
+
+        <!-- Rating -->
+        <div class="rating-widget">
+          <span class="text-muted">Your rating:</span>
+          <div class="bud-rating">
+            {#each [1, 2, 3, 4, 5] as star}
+              <button
+                class="bud-btn"
+                class:active={star <= userRating}
+                on:click={() => submitRating(star)}
+                disabled={ratingSubmitting}
+                title="{star} bud{star !== 1 ? 's' : ''}"
+              >&#127807;</button>
+            {/each}
+          </div>
+          {#if ratingSubmitting}<span class="text-muted">Submitting...</span>{/if}
+        </div>
+
+        <!-- Photo Upload -->
+        <div style="margin-top: var(--space-md);">
+          <label class="btn">
+            {photoUploading ? 'Uploading...' : 'Add Photo'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" on:change={uploadPhoto} hidden disabled={photoUploading} />
+          </label>
+        </div>
+
+        <!-- Comment Form -->
+        <div style="margin-top: var(--space-lg);">
+          <h3>Comments ({comments.length})</h3>
+          <div style="display: flex; gap: var(--space-sm); margin-bottom: var(--space-md);">
+            <input
+              type="text"
+              bind:value={commentBody}
+              placeholder="Share your thoughts on this strain..."
+              style="flex: 1;"
+            />
+            <button class="btn-primary" on:click={submitComment} disabled={commentSubmitting || !commentBody.trim()}>
+              Post
+            </button>
+          </div>
+          {#if comments.length > 0}
+            <div class="comment-list">
+              {#each comments as c}
+                <div class="card" style="margin-bottom: var(--space-sm); padding: var(--space-sm) var(--space-md);">
+                  <p class="text-muted" style="font-size: 0.75rem;">
+                    {c.display_name || 'Anonymous'} &middot; {new Date(c.created_at).toLocaleDateString()}
+                  </p>
+                  <p>{c.body}</p>
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <p class="text-muted">No comments yet. Be the first!</p>
+          {/if}
+        </div>
+      </section>
+    {/if}
+
     <!-- Similar Strains -->
     {#if similarStrains.length > 0}
       <section class="section">
@@ -342,4 +482,15 @@
       height: 250px;
     }
   }
+
+  .interactive-section { border-top: 1px solid var(--border); padding-top: var(--space-lg); }
+  .rating-widget { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-sm) 0; }
+  .bud-rating { display: flex; gap: 2px; }
+  .bud-btn {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer;
+    opacity: 0.3; transition: opacity 0.15s; padding: 0 2px;
+  }
+  .bud-btn.active { opacity: 1; }
+  .bud-btn:hover { opacity: 0.7; }
+  .comment-list { max-height: 400px; overflow-y: auto; }
 </style>
