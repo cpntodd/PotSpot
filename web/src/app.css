@@ -97,6 +97,18 @@ button:disabled, .btn:disabled, .btn-primary:disabled {
   background-color: var(--accent-light);
 }
 
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: inherit;
+  padding: 0;
+  text-decoration: none;
+}
+.link-btn:hover { text-decoration: underline; }
+
 input, textarea, select {
   font-family: var(--font-body);
   font-size: 0.875rem;
