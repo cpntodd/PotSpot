@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Multipart, Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -24,6 +24,7 @@ pub fn router() -> Router<AppState> {
         .route("/:id/comments", get(get_comments))
         .route("/:id/comments", post(post_comment))
         .route("/:id/revisions", get(get_revisions))
+        .route("/:id/photos", post(upload_photo))
 }
 
 /// GET /api/v1/strains
@@ -272,3 +273,60 @@ async fn similar(
     Ok(Json(strains))
 }
 
+/// POST /api/v1/strains/:id/photos
+///
+/// Upload a photo for an existing strain. Multipart form with field `file`.
+async fn upload_photo(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(strain_id): Path<uuid::Uuid>,
+    mut multipart: Multipart,
+) -> AppResult<Json<serde_json::Value>> {
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        AppError::BadRequest(format!("Invalid multipart data: {}", e))
+    })? {
+        let content_type = field
+            .content_type()
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| "image/jpeg".into());
+
+        let data = field.bytes().await.map_err(|e| {
+            AppError::BadRequest(format!("Failed to read upload: {}", e))
+        })?;
+
+        crate::services::photo_service::validate_photo(&data, &content_type, false)?;
+
+        let photo_id = uuid::Uuid::new_v4();
+        let s3_key = format!("strains/{}/{}.webp", strain_id, photo_id);
+        let thumb_key = format!("strains/{}/{}_thumb.webp", strain_id, photo_id);
+
+        // Strip EXIF, resize, upload
+        let processed = crate::services::photo_service::strip_exif(&data)?;
+        let thumbnail = crate::services::photo_service::generate_thumbnail(&processed)?;
+
+        crate::s3::upload_object(&state.config, &s3_key, &processed, "image/webp").await?;
+        crate::s3::upload_object(&state.config, &thumb_key, &thumbnail, "image/webp").await?;
+
+        // Record in database
+        sqlx::query(
+            "INSERT INTO strain_photos (id, strain_id, user_id, s3_key, thumbnail_s3_key, content_type, file_size_bytes, width, height) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 0)",
+        )
+        .bind(photo_id)
+        .bind(strain_id)
+        .bind(auth.user_id)
+        .bind(&s3_key)
+        .bind(&thumb_key)
+        .bind(&content_type)
+        .bind(data.len() as i32)
+        .execute(&state.pool)
+        .await?;
+
+        return Ok(Json(serde_json::json!({
+            "message": "Photo uploaded",
+            "photo_id": photo_id,
+        })));
+    }
+
+    Err(AppError::BadRequest("No file provided".into()))
+}

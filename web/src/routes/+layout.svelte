@@ -20,6 +20,7 @@
       <a href="/strains">Catalog</a>
       <a href="/vault">My Vault</a>
       {#if $isLoggedIn}
+        <a href="/strains/new">+ Add Strain</a>
         <a href="/profile">My Profile</a>
         <button class="link-btn" on:click={handleLogout}>Log Off</button>
       {:else}
