@@ -1,8 +1,45 @@
 # PotSpot -- Production Deployment Guide
 
-## Prerequisites
+## Proxmox LXC (Recommended -- 5 minute deploy)
 
-- A Linux VPS (recommended: Hetzner CX41 or DigitalOcean equivalent)
+### Option A: Deploy from Proxmox host (fully automated)
+
+From your Proxmox host, run:
+```bash
+# Set your domain
+export DOMAIN=potspot.yourdomain.com
+
+# Run the automated deployer (creates CT + installs + starts)
+sudo bash deploy/proxmox-deploy.sh
+```
+
+This creates an Ubuntu 24.04 LXC container (2 CPU, 2GB RAM, 20GB disk), installs Docker, clones the repo, generates secrets, and starts the full stack.
+
+### Option B: Deploy inside an existing LXC/VPS
+
+SSH into your container and run:
+```bash
+curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo DOMAIN=potspot.yourdomain.com bash
+```
+
+### After deployment
+
+1. Point DNS A record for your domain to the container's IP
+2. Wait for Let's Encrypt to issue the certificate (automatic via Caddy, ~30s)
+3. Visit `https://yourdomain.com`
+
+### Container specs
+
+| Resource | Minimum | Recommended |
+|---|---|---|
+| CPU | 1 core | 2-4 cores |
+| RAM | 1 GB | 2-4 GB |
+| Disk | 10 GB | 20+ GB |
+| OS | Ubuntu 24.04 | Ubuntu 24.04 |
+
+---
+
+## Manual VPS Deployment
 - Docker and Docker Compose installed
 - A domain name pointed to your VPS
 - Ports 80 and 443 open in firewall
