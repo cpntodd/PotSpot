@@ -26,7 +26,7 @@ pub async fn search_strains(
     let mut data_builder = QueryBuilder::<Postgres>::new(
         r#"SELECT
             ps.id, ps.name, ps.type::text AS strain_type,
-            ps.thc_percentage, ps.cbd_percentage,
+            ps.thc_percentage::float8, ps.cbd_percentage::float8,
             ps.average_rating, ps.rating_count,
             ps.created_at
         FROM public_strains ps
@@ -199,7 +199,7 @@ struct StrainSummaryRow {
 /// Get full strain detail with terpenes, effects, and primary photo key.
 pub async fn get_strain_detail(pool: &PgPool, strain_id: Uuid) -> AppResult<StrainDetail> {
     let strain = sqlx::query_as::<_, PublicStrain>(
-        r#"SELECT id, name, type::text, thc_percentage, cbd_percentage,
+        r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
                   average_rating, rating_count, is_active,
@@ -353,7 +353,7 @@ pub async fn update_strain(
 ) -> AppResult<()> {
     // Fetch current state for revision snapshot
     let old_strain = sqlx::query_as::<_, PublicStrain>(
-        r#"SELECT id, name, type::text, thc_percentage, cbd_percentage,
+        r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
                   average_rating, rating_count, is_active,
@@ -412,48 +412,7 @@ pub async fn update_strain(
     .await?;
 
     let new_strain = sqlx::query_as::<_, PublicStrain>(
-        r#"SELECT id, name, type::text, thc_percentage, cbd_percentage,
-                  description, color, smell, flavor, breeder, lineage,
-                  growing_difficulty::text, flowering_time_days,
-                  average_rating, rating_count, is_active,
-                  created_at, updated_at, version
-           FROM public_strains WHERE id = $1"#,
-    )
-    .bind(strain_id)
-    .fetch_one(pool)
-    .await?;
-
-    let new_data = serde_json::to_value(&new_strain).map_err(|e| AppError::Internal(e.into()))?;
-    sqlx::query(
-        r#"UPDATE public_strains SET
-            name = $1, type = $2::strain_type,
-            thc_percentage = $3, cbd_percentage = $4,
-            description = $5, color = $6, smell = $7, flavor = $8,
-            breeder = $9, lineage = $10,
-            growing_difficulty = $11::growing_difficulty,
-            flowering_time_days = $12,
-            version = version + 1
-           WHERE id = $13"#,
-    )
-    .bind(name)
-    .bind(strain_type)
-    .bind(thc_percentage)
-    .bind(cbd_percentage)
-    .bind(description)
-    .bind(color)
-    .bind(smell)
-    .bind(flavor)
-    .bind(breeder)
-    .bind(lineage)
-    .bind(growing_difficulty)
-    .bind(flowering_time_days)
-    .bind(strain_id)
-    .execute(pool)
-    .await?;
-
-    // Fetch new state for revision record
-    let new_strain = sqlx::query_as::<_, PublicStrain>(
-        r#"SELECT id, name, type::text, thc_percentage, cbd_percentage,
+        r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
                   average_rating, rating_count, is_active,
