@@ -65,7 +65,7 @@ a:hover {
   color: var(--accent-light);
 }
 
-button, .btn {
+button, .btn, .btn-primary {
   display: inline-block;
   font-family: var(--font-body);
   font-size: 0.875rem;
@@ -78,12 +78,12 @@ button, .btn {
   transition: all 0.2s ease;
 }
 
-button:hover, .btn:hover {
+button:hover, .btn:hover, .btn-primary:hover {
   background-color: var(--accent);
   color: var(--bg);
 }
 
-button:disabled, .btn:disabled {
+button:disabled, .btn:disabled, .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
