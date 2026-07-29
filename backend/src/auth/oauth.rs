@@ -20,6 +20,9 @@ pub enum OAuthProvider {
 pub struct OAuthCallbackQuery {
     pub code: String,
     pub state: String,
+    /// Frontend URL to redirect to after successful auth (optional)
+    #[serde(default)]
+    pub redirect_to: Option<String>,
 }
 
 /// Generate the OAuth authorization URL for a provider.

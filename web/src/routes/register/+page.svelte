@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiRequest, setTokens } from '$lib/api';
   import { goto } from '$app/navigation';
+  import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
   let email = '';
   let password = '';
@@ -70,6 +71,8 @@
     <button type="submit" class="btn-primary" disabled={loading}>
       {loading ? 'Creating account...' : 'Create Account'}
     </button>
+
+    <OAuthButtons />
   </form>
 
   <p style="text-align: center; margin-top: var(--space-lg);">

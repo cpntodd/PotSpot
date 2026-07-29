@@ -260,44 +260,24 @@ async fn oauth_redirect(
 /// GET /api/v1/auth/oauth/callback
 ///
 /// Handles the OAuth provider's callback, exchanges the code for tokens,
-/// and returns JWT tokens to the client.
+/// and redirects to the frontend with tokens as query parameters.
 async fn oauth_callback(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<oauth::OAuthCallbackQuery>,
-) -> AppResult<Json<TokenResponse>> {
-    // The provider is not in the callback URL. We'd need to store it in the state param.
-    // For now, default to Google. In production, encode provider in state.
+) -> AppResult<axum::response::Redirect> {
     let provider = OAuthProvider::Google;
     let redirect_uri = format!("{}/api/v1/auth/oauth/callback", state.config.cors_origin);
 
     let (access_token, refresh_token) =
         oauth::handle_oauth_callback(&provider, &params.code, &redirect_uri, &state.config, &state.pool).await?;
 
-    // Decode the access token to get user info for the response
-    let claims = jwt::validate_access_token(&access_token, &state.config.jwt_secret)?;
-    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| AppError::Internal(anyhow::anyhow!("Invalid user ID in token")))?;
+    // Redirect to frontend callback page with tokens
+    let frontend_callback = format!(
+        "{}/auth/callback?access_token={}&refresh_token={}",
+        state.config.cors_origin, access_token, refresh_token
+    );
 
-    let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT * FROM users WHERE id = $1",
-    )
-    .bind(user_id)
-    .fetch_one(&state.pool)
-    .await?;
-
-    let profile = UserProfile {
-        id: user.id,
-        display_name: user.display_name,
-        role: user.role,
-        created_at: user.created_at,
-    };
-
-    Ok(Json(TokenResponse {
-        access_token,
-        refresh_token,
-        token_type: "Bearer".into(),
-        expires_in: 900,
-        user: profile,
-    }))
+    Ok(axum::response::Redirect::to(&frontend_callback))
 }
 
 /// GET /api/v1/auth/me

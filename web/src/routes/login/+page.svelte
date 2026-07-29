@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiRequest, setTokens, hasSession } from '$lib/api';
   import { goto } from '$app/navigation';
+  import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
   let email = '';
   let password = '';
@@ -50,6 +51,8 @@
     <button type="submit" class="btn-primary" disabled={loading}>
       {loading ? 'Signing in...' : 'Sign In'}
     </button>
+
+    <OAuthButtons />
   </form>
 
   <p style="text-align: center; margin-top: var(--space-lg);">
