@@ -183,3 +183,29 @@ INSERT INTO strain_effects (strain_id, effect_id) VALUES
     ('a0000001-0000-0000-0000-000000000005', (SELECT id FROM effects WHERE name = 'Uplifted')),
     ('a0000001-0000-0000-0000-000000000005', (SELECT id FROM effects WHERE name = 'Anxiety Relief')),
     ('a0000001-0000-0000-0000-000000000005', (SELECT id FROM effects WHERE name = 'Stress Relief'));
+
+-- ============================================================================
+-- Sample Ratings (denormalized averages will be recalculated by trigger)
+-- ============================================================================
+
+-- We need at least one user for ratings. Create a test admin user.
+-- Password: "testpass123" (argon2id hash pre-computed)
+INSERT INTO users (id, email, password_hash, display_name, role, age_verified, date_of_birth)
+VALUES (
+    'b0000001-0000-0000-0000-000000000001',
+    'admin@potspot.test',
+    '$argon2id$v=19$m=65536,t=3,p=4$NEVER_USE_THIS_IN_PRODUCTION$PLACEHOLDER_HASH',
+    'Test Admin',
+    'admin',
+    true,
+    '1990-01-01'
+) ON CONFLICT (email) DO NOTHING;
+
+-- Add some ratings (will be recalculated by the trigger)
+INSERT INTO strain_ratings (strain_id, user_id, rating) VALUES
+    ('a0000001-0000-0000-0000-000000000001', 'b0000001-0000-0000-0000-000000000001', 5),
+    ('a0000001-0000-0000-0000-000000000002', 'b0000001-0000-0000-0000-000000000001', 4),
+    ('a0000001-0000-0000-0000-000000000003', 'b0000001-0000-0000-0000-000000000001', 5),
+    ('a0000001-0000-0000-0000-000000000004', 'b0000001-0000-0000-0000-000000000001', 4),
+    ('a0000001-0000-0000-0000-000000000005', 'b0000001-0000-0000-0000-000000000001', 5)
+ON CONFLICT (strain_id, user_id) DO NOTHING;
