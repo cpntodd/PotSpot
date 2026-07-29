@@ -65,12 +65,20 @@ async fn reply(
 
     if let Some(author_id) = parent_author {
         if author_id != auth.user_id {
+            let display_name: Option<String> = sqlx::query_scalar(
+                "SELECT display_name FROM users WHERE id = $1",
+            )
+            .bind(auth.user_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .unwrap_or_default();
+
             let _ = notification_service::create_notification(
                 &state.pool,
                 author_id,
                 "comment_reply",
                 Some(id),
-                &format!("{} replied to your comment", ""), // TODO: fetch display_name
+                &format!("{} replied to your comment", display_name),
             )
             .await;
         }
