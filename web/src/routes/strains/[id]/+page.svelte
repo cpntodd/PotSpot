@@ -168,17 +168,20 @@
             <span class="badge">CBD {strain.cbd_percentage}%</span>
           {/if}
         </div>
-        {#if strain.average_rating}
-          <div class="rating-display">
-            <span class="stars">
-              {#each Array(5) as _, i}
-                <BudIcon size={22} filled={i < Math.round(strain.average_rating)} />
-              {/each}
-            </span>
+        <div class="rating-display">
+          <span class="stars">
+            {#each Array(5) as _, i}
+              <BudIcon size={22} filled={strain.average_rating ? i < Math.round(strain.average_rating) : false} />
+            {/each}
+          </span>
+          {#if strain.average_rating}
             <span>{strain.average_rating.toFixed(1)} / 5</span>
             <span class="text-muted">({strain.rating_count} rating{strain.rating_count !== 1 ? 's' : ''})</span>
-          </div>
-        {/if}
+          {:else}
+            <span class="text-muted">No ratings yet</span>
+          {/if}
+          <a href="/strains/{strain.id}/gallery" class="gallery-link text-muted">Photos</a>
+        </div>
       </div>
 
       {#if strain.primary_photo_url}
@@ -519,5 +522,14 @@
   .bud-btn:hover { opacity: 0.7; }
   .rating-display { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
   .stars { display: flex; align-items: center; gap: 1px; }
+  .gallery-link {
+    margin-left: auto;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: var(--radius);
+    text-decoration: none;
+  }
+  .gallery-link:hover { border-color: var(--accent); color: var(--accent); }
   .comment-list { max-height: 400px; overflow-y: auto; }
 </style>
