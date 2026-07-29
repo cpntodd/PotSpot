@@ -24,8 +24,9 @@ struct SetRoleBody {
 /// GET /api/v1/admin/users
 async fn list_users(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_admin()?;
     let users = sqlx::query_as::<_, (uuid::Uuid, String, String, String, bool, chrono::DateTime<chrono::Utc>)>(
         r#"SELECT id, email, display_name, role::text, age_verified, created_at
            FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC"#,
@@ -86,7 +87,7 @@ async fn set_role(
         r#"INSERT INTO admin_audit_log (admin_id, action, target_id, details)
            VALUES ($1, 'user_role_change', $2, $3)"#,
     )
-    .bind(_auth.user_id)
+    .bind(auth.user_id)
     .bind(user_id)
     .bind(serde_json::json!({ "new_role": req.role }))
     .execute(&state.pool)
@@ -98,8 +99,9 @@ async fn set_role(
 /// GET /api/v1/admin/stats
 async fn stats(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_admin()?;
     let user_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL",
     )

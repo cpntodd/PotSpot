@@ -93,10 +93,11 @@ async fn detail(
 
 /// POST /api/v1/strains
 ///
-/// Create a new public strain. Admin only for now.
+/// Create a new public strain. Any authenticated user can create.
+/// Submissions enter the vetting queue before appearing in the catalog.
 async fn create(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(req): Json<CreateStrainRequest>,
 ) -> AppResult<Json<serde_json::Value>> {
     // TODO: Check admin role when middleware is wired
@@ -169,9 +170,10 @@ async fn update(
 /// Deactivate a public strain. Admin only.
 async fn remove(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<uuid::Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_admin()?;
     strain_service::deactivate_strain(&state.pool, id).await?;
 
     Ok(Json(serde_json::json!({
