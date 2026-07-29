@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,7 +9,7 @@ use crate::errors::{AppError, AppResult};
 use crate::models::{
     CreateStrainRequest, RateStrainRequest, StrainListResponse, StrainSearchQuery, UpdateStrainRequest,
 };
-use crate::services::strain_service;
+use crate::services::{comment_service, strain_service};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -21,6 +21,8 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", delete(remove))
         .route("/{id}/rate", post(rate))
         .route("/{id}/similar", get(similar))
+        .route("/{id}/comments", get(get_comments))
+        .route("/{id}/comments", post(post_comment))
 }
 
 /// GET /api/v1/strains
@@ -203,6 +205,44 @@ async fn rate(
 
     Ok(Json(serde_json::json!({
         "message": "Rating submitted successfully",
+    })))
+}
+
+/// GET /api/v1/strains/:id/comments
+async fn get_comments(
+    State(state): State<AppState>,
+    Path(strain_id): Path<uuid::Uuid>,
+    auth: Option<AuthUser>,
+) -> AppResult<Json<serde_json::Value>> {
+    let current_user_id = auth.map(|u| u.user_id);
+    let comments = comment_service::get_comments(&state.pool, strain_id, current_user_id).await?;
+    Ok(Json(serde_json::to_value(comments).map_err(|e| AppError::Internal(e.into()))?))
+}
+
+/// POST /api/v1/strains/:id/comments
+#[derive(serde::Deserialize)]
+struct PostCommentBody {
+    body: String,
+}
+
+async fn post_comment(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(strain_id): Path<uuid::Uuid>,
+    Json(req): Json<PostCommentBody>,
+) -> AppResult<Json<serde_json::Value>> {
+    let id = comment_service::post_comment(
+        &state.pool,
+        strain_id,
+        auth.user_id,
+        None, // top-level comment
+        &req.body,
+    )
+    .await?;
+
+    Ok(Json(serde_json::json!({
+        "message": "Comment posted",
+        "id": id,
     })))
 }
 

@@ -6,6 +6,7 @@ use sha2::Digest;
 use uuid::Uuid;
 
 use crate::auth::jwt;
+use crate::auth::middleware::AuthUser;
 use crate::auth::oauth::{self, OAuthProvider};
 use crate::errors::{AppError, AppResult};
 use crate::models::{
@@ -21,6 +22,7 @@ pub fn router() -> Router<AppState> {
         .route("/logout", post(logout))
         .route("/oauth/:provider", get(oauth_redirect))
         .route("/oauth/callback", get(oauth_callback))
+        .route("/me", get(profile))
 }
 
 /// POST /api/v1/auth/register
@@ -296,6 +298,65 @@ async fn oauth_callback(
         expires_in: 900,
         user: profile,
     }))
+}
+
+/// GET /api/v1/auth/me
+///
+/// Returns the current user's profile with contribution stats.
+async fn profile(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let user = sqlx::query_as::<_, crate::models::User>(
+        "SELECT * FROM users WHERE id = $1",
+    )
+    .bind(auth.user_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    // Get contribution stats
+    let strain_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM private_strains WHERE user_id = $1",
+    )
+    .bind(auth.user_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    let pushed_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM private_strains WHERE user_id = $1 AND public_strain_id IS NOT NULL",
+    )
+    .bind(auth.user_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    let rating_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM strain_ratings WHERE user_id = $1",
+    )
+    .bind(auth.user_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    let comment_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM comments WHERE user_id = $1 AND is_deleted = false",
+    )
+    .bind(auth.user_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    Ok(Json(serde_json::json!({
+        "id": user.id,
+        "email": user.email,
+        "display_name": user.display_name,
+        "role": user.role,
+        "age_verified": user.age_verified,
+        "created_at": user.created_at,
+        "stats": {
+            "private_strains": strain_count,
+            "pushed_to_public": pushed_count,
+            "ratings": rating_count,
+            "comments": comment_count,
+        },
+    })))
 }
 
 fn parse_provider(s: &str) -> AppResult<OAuthProvider> {
