@@ -22,6 +22,9 @@ for tool in git openssl; do
   fi
 done
 
+# Default to verbose output (set VERBOSE=no to suppress build logs)
+export VERBOSE="${VERBOSE:-yes}"
+
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func)
@@ -87,7 +90,7 @@ function update() {
   msg_ok "Pulled latest changes"
 
   msg_info "Rebuilding and restarting ${APP}"
-  $STD docker compose -f "$COMPOSE_FILE" up -d --build
+  $STD docker compose -f "$COMPOSE_FILE" up -d --build --progress=plain
   msg_ok "Restarted ${APP}"
   msg_ok "Updated successfully"
   exit
@@ -184,7 +187,7 @@ ENVEOF
 
   msg_info "Building and starting ${APP}"
   cd "$INSTALL_PATH"
-  $STD docker compose -f "$COMPOSE_FILE" up -d --build
+  $STD docker compose -f "$COMPOSE_FILE" up -d --build --progress=plain
   msg_ok "Started ${APP}"
 
   # Create update script
