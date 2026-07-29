@@ -30,6 +30,14 @@ async fn register(
     State(state): State<AppState>,
     Json(req): Json<RegisterRequest>,
 ) -> AppResult<Json<TokenResponse>> {
+    // Validate username
+    if req.username.len() < 3 || req.username.len() > 32 {
+        return Err(AppError::BadRequest("Username must be 3-32 characters".into()));
+    }
+    if !req.username.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        return Err(AppError::BadRequest("Username can only contain letters, numbers, underscores, and hyphens".into()));
+    }
+
     // Validate email format
     if !req.email.contains('@') {
         return Err(AppError::BadRequest("Invalid email address".into()));
@@ -40,16 +48,19 @@ async fn register(
         return Err(AppError::BadRequest("Password must be at least 8 characters".into()));
     }
 
-    // Check for existing user
+    let username_lower = req.username.to_lowercase();
+
+    // Check for existing user by email or username
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM users WHERE email = $1",
+        "SELECT COUNT(*) FROM users WHERE email = $1 OR username = $2",
     )
     .bind(&req.email.to_lowercase())
+    .bind(&username_lower)
     .fetch_one(&state.pool)
     .await?;
 
     if existing > 0 {
-        return Err(AppError::Conflict("A user with this email already exists".into()));
+        return Err(AppError::Conflict("A user with this email or username already exists".into()));
     }
 
     // Hash password with argon2id
@@ -65,10 +76,11 @@ async fn register(
     let now = Utc::now();
 
     sqlx::query(
-        r#"INSERT INTO users (id, email, password_hash, display_name, date_of_birth, age_verified, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, false, $6, $6)"#,
+        r#"INSERT INTO users (id, username, email, password_hash, display_name, date_of_birth, age_verified, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, false, $7, $7)"#,
     )
     .bind(user_id)
+    .bind(&username_lower)
     .bind(req.email.to_lowercase())
     .bind(&password_hash)
     .bind(&req.display_name)
@@ -93,6 +105,7 @@ async fn register(
 
     let profile = UserProfile {
         id: user_id,
+        username: username_lower,
         display_name: req.display_name,
         role: "user".into(),
         bio: None,
@@ -111,18 +124,23 @@ async fn register(
 }
 
 /// POST /api/v1/auth/login
+///
+/// Accepts either email address or username as the identifier.
 async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
 ) -> AppResult<Json<TokenResponse>> {
-    // Look up user by email
+    let identifier = req.identifier.to_lowercase();
+
+    // Look up user by email OR username
     let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT id, email, password_hash, display_name, role::text, \
+        "SELECT id, username, email, password_hash, display_name, role::text, \
                 age_verified, date_of_birth, avatar_s3_key, banner_s3_key, bio, \
                 created_at, updated_at \
-         FROM users WHERE email = $1 AND deleted_at IS NULL",
+         FROM users \
+         WHERE (email = $1 OR username = $1) AND deleted_at IS NULL",
     )
-    .bind(req.email.to_lowercase())
+    .bind(&identifier)
     .fetch_optional(&state.pool)
     .await?
     .ok_or_else(|| AppError::Unauthorized)?;
@@ -154,6 +172,7 @@ async fn login(
 
     let profile = UserProfile {
         id: user.id,
+        username: user.username,
         display_name: user.display_name,
         role: user.role,
         bio: user.bio,
@@ -184,8 +203,8 @@ async fn refresh(
     };
 
     // Look up in database
-    let row = sqlx::query_as::<_, (Uuid, String, String, String, chrono::DateTime<Utc>)>(
-        r#"SELECT rt.user_id, u.role, u.display_name, u.email, u.created_at
+    let row = sqlx::query_as::<_, (Uuid, String, String, String, String, chrono::DateTime<Utc>)>(
+        r#"SELECT rt.user_id, u.role, u.username, u.display_name, u.email, u.created_at
            FROM refresh_tokens rt
            JOIN users u ON u.id = rt.user_id
            WHERE rt.token_hash = $1
@@ -197,7 +216,7 @@ async fn refresh(
     .await?
     .ok_or_else(|| AppError::Unauthorized)?;
 
-    let (user_id, role, display_name, _email, created_at) = row;
+    let (user_id, role, username, display_name, _email, created_at) = row;
 
     // Revoke old refresh token
     sqlx::query("UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1")
@@ -220,6 +239,7 @@ async fn refresh(
 
     let profile = UserProfile {
         id: user_id,
+        username,
         display_name,
         role,
         bio: None,
@@ -300,7 +320,7 @@ async fn profile(
     auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
     let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT id, email, password_hash, display_name, role::text, \
+        "SELECT id, username, email, password_hash, display_name, role::text, \
                 age_verified, date_of_birth, avatar_s3_key, banner_s3_key, bio, \
                 created_at, updated_at \
          FROM users WHERE id = $1",

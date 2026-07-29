@@ -4,7 +4,7 @@
   import { goto } from '$app/navigation';
   import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
-  let email = '';
+  let identifier = '';
   let password = '';
   let error = '';
   let loading = false;
@@ -19,7 +19,7 @@
         user: { id: string; display_name: string; role: string };
       }>('/auth/login', {
         method: 'POST',
-        body: { email, password },
+        body: { identifier, password },
       });
       auth.login(data.access_token, data.refresh_token, data.user.display_name);
       goto('/vault');
@@ -36,8 +36,8 @@
 
   <form class="card" on:submit|preventDefault={handleLogin} style="display: flex; flex-direction: column; gap: var(--space-md);">
     <label>
-      <span class="text-muted" style="font-size: 0.8rem;">Email</span>
-      <input type="email" bind:value={email} placeholder="you@example.com" required />
+      <span class="text-muted" style="font-size: 0.8rem;">Email or Username</span>
+      <input type="text" bind:value={identifier} placeholder="you@example.com or yourname" required />
     </label>
 
     <label>

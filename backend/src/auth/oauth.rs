@@ -330,11 +330,13 @@ async fn find_or_create_oauth_user_by_provider(
 
     // Create new user
     let uid = uuid::Uuid::new_v4();
+    let username = email.split('@').next().unwrap_or("user").to_lowercase();
     sqlx::query(
-        "INSERT INTO users (id, email, display_name, age_verified, role)
-         VALUES ($1, $2, $3, false, 'user')",
+        "INSERT INTO users (id, username, email, display_name, age_verified, role)
+         VALUES ($1, $2, $3, $4, false, 'user')",
     )
     .bind(uid)
+    .bind(&username)
     .bind(email)
     .bind(name)
     .execute(pool)
@@ -402,11 +404,13 @@ async fn find_or_create_oauth_user(
     } else {
         // Create new user
         let uid = uuid::Uuid::new_v4();
+        let username = email.split('@').next().unwrap_or("user").to_lowercase();
         sqlx::query(
-            "INSERT INTO users (id, email, display_name, age_verified, role)
-             VALUES ($1, $2, $3, false, 'user')",
+            "INSERT INTO users (id, username, email, display_name, age_verified, role)
+             VALUES ($1, $2, $3, $4, false, 'user')",
         )
         .bind(uid)
+        .bind(&username)
         .bind(email)
         .bind(name)
         .execute(pool)

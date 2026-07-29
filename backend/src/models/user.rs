@@ -7,6 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct User {
     pub id: Uuid,
+    pub username: String,
     pub email: String,
     #[serde(skip_serializing)]
     pub password_hash: Option<String>,
@@ -25,6 +26,7 @@ pub struct User {
 #[derive(Debug, Serialize)]
 pub struct UserProfile {
     pub id: Uuid,
+    pub username: String,
     pub display_name: String,
     pub role: String,
     pub bio: Option<String>,
@@ -53,6 +55,7 @@ pub struct ProfileUpdateRequest {
 /// Request body for email/password registration.
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
+    pub username: String,
     pub email: String,
     pub password: String,
     pub display_name: String,
@@ -62,7 +65,8 @@ pub struct RegisterRequest {
 /// Request body for email/password login.
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
-    pub email: String,
+    /// Email address or username
+    pub identifier: String,
     pub password: String,
 }
 

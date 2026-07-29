@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import OAuthButtons from '$lib/components/OAuthButtons.svelte';
 
+  let username = '';
   let email = '';
   let password = '';
   let displayName = '';
@@ -17,6 +18,10 @@
       error = 'Password must be at least 8 characters';
       return;
     }
+    if (username.length < 3) {
+      error = 'Username must be at least 3 characters';
+      return;
+    }
     loading = true;
     try {
       const data = await apiRequest<{
@@ -25,7 +30,7 @@
         user: { id: string; display_name: string };
       }>('/auth/register', {
         method: 'POST',
-        body: { email, password, display_name: displayName, date_of_birth: dateOfBirth },
+        body: { username, email, password, display_name: displayName, date_of_birth: dateOfBirth },
       });
       auth.login(data.access_token, data.refresh_token, displayName);
       goto('/vault');
@@ -44,6 +49,11 @@
     <label>
       <span class="text-muted" style="font-size: 0.8rem;">Display Name</span>
       <input type="text" bind:value={displayName} placeholder="How others see you" required />
+    </label>
+
+    <label>
+      <span class="text-muted" style="font-size: 0.8rem;">Username</span>
+      <input type="text" bind:value={username} placeholder="Letters, numbers, _ and -" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_-]+" />
     </label>
 
     <label>

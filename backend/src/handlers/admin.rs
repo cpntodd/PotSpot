@@ -27,8 +27,8 @@ async fn list_users(
     auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_admin()?;
-    let users = sqlx::query_as::<_, (uuid::Uuid, String, String, String, bool, chrono::DateTime<chrono::Utc>)>(
-        r#"SELECT id, email, display_name, role::text, age_verified, created_at
+    let users = sqlx::query_as::<_, (uuid::Uuid, String, String, String, String, bool, chrono::DateTime<chrono::Utc>)>(
+        r#"SELECT id, username, email, display_name, role::text, age_verified, created_at
            FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC"#,
     )
     .fetch_all(&state.pool)
@@ -36,9 +36,10 @@ async fn list_users(
 
     let user_list: Vec<serde_json::Value> = users
         .into_iter()
-        .map(|(id, email, display_name, role, age_verified, created_at)| {
+        .map(|(id, username, email, display_name, role, age_verified, created_at)| {
             serde_json::json!({
                 "id": id,
+                "username": username,
                 "email": email,
                 "display_name": display_name,
                 "role": role,

@@ -28,7 +28,7 @@ async fn profile(
     auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
     let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT id, email, password_hash, display_name, role::text, \
+        "SELECT id, username, email, password_hash, display_name, role::text, \
                 age_verified, date_of_birth, avatar_s3_key, banner_s3_key, bio, \
                 created_at, updated_at \
          FROM users WHERE id = $1",
@@ -55,6 +55,7 @@ async fn profile(
 
     Ok(Json(serde_json::json!({
         "id": user.id,
+        "username": user.username,
         "email": user.email,
         "display_name": user.display_name,
         "role": user.role,
