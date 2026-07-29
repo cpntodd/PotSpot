@@ -25,6 +25,8 @@ pub fn router() -> Router<AppState> {
         .route("/:id/comments", post(post_comment))
         .route("/:id/revisions", get(get_revisions))
         .route("/:id/photos", post(upload_photo))
+        .route("/terpenes", get(list_terpenes))
+        .route("/effects", get(list_effects))
 }
 
 /// GET /api/v1/strains
@@ -331,4 +333,20 @@ async fn upload_photo(
     }
 
     Err(AppError::BadRequest("No file provided".into()))
+}
+
+/// GET /api/v1/strains/terpenes
+async fn list_terpenes(
+    State(state): State<AppState>,
+) -> AppResult<Json<Vec<crate::models::TerpeneInfo>>> {
+    let terpenes = crate::services::strain_service::list_terpenes(&state.pool).await?;
+    Ok(Json(terpenes))
+}
+
+/// GET /api/v1/strains/effects
+async fn list_effects(
+    State(state): State<AppState>,
+) -> AppResult<Json<Vec<crate::models::EffectInfo>>> {
+    let effects = crate::services::strain_service::list_effects(&state.pool).await?;
+    Ok(Json(effects))
 }

@@ -2,7 +2,11 @@
   import { apiRequest } from '$lib/api';
   import { isLoggedIn } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
   import PhotoUpload from '$lib/components/PhotoUpload.svelte';
+
+  interface Terpene { id: number; name: string; icon: string; description: string | null; }
+  interface Effect { id: number; name: string; category: string; }
 
   let name = '';
   let strainType = 'hybrid';
@@ -21,13 +25,26 @@
   let success = '';
   let createdStrainId = '';
 
-  // Photo state
+  let terpenes: Terpene[] = [];
+  let effects: Effect[] = [];
+  let selectedTerpenes: number[] = [];
+  let selectedEffects: number[] = [];
+
   let photoFiles: File[] = [];
   let photoPreviews: string[] = [];
 
-  $: if (!$isLoggedIn) {
-    goto('/login');
-  }
+  $: if (!$isLoggedIn) goto('/login');
+
+  onMount(async () => {
+    try {
+      const [t, e] = await Promise.all([
+        apiRequest<Terpene[]>('/strains/terpenes'),
+        apiRequest<Effect[]>('/strains/effects'),
+      ]);
+      terpenes = t;
+      effects = e;
+    } catch { /* silently fail, terpenes/effects optional */ }
+  });
 
   async function handleSubmit() {
     error = '';
@@ -51,8 +68,8 @@
           lineage: lineage || null,
           growing_difficulty: growingDifficulty || null,
           flowering_time_days: floweringTime,
-          terpene_ids: [],
-          effect_ids: [],
+          terpene_ids: selectedTerpenes,
+          effect_ids: selectedEffects,
         },
       });
 
@@ -171,6 +188,36 @@
         </label>
       </div>
 
+      <!-- Terpenes -->
+      {#if terpenes.length > 0}
+        <div>
+          <span class="text-muted">Terpenes</span>
+          <div class="chip-grid">
+            {#each terpenes as t}
+              <label class="chip" class:selected={selectedTerpenes.includes(t.id)}>
+                <input type="checkbox" bind:group={selectedTerpenes} value={t.id} hidden />
+                {t.name}
+              </label>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
+      <!-- Effects -->
+      {#if effects.length > 0}
+        <div>
+          <span class="text-muted">Effects</span>
+          <div class="chip-grid">
+            {#each effects as e}
+              <label class="chip" class:selected={selectedEffects.includes(e.id)}>
+                <input type="checkbox" bind:group={selectedEffects} value={e.id} hidden />
+                {e.name}
+              </label>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Photos -->
       <div>
         <span class="text-muted">Photos</span>
@@ -206,5 +253,27 @@
   select:focus, input:focus, textarea:focus {
     border-color: var(--accent);
     outline: none;
+  }
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+  }
+  .chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.selected {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
   }
 </style>
