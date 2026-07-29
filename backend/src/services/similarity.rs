@@ -102,8 +102,8 @@ async fn compute_similar(
         )
         SELECT
             ps.id, ps.name, ps.type::text AS strain_type,
-            ps.thc_percentage, ps.cbd_percentage,
-            ps.average_rating, ps.rating_count,
+            ps.thc_percentage::float8, ps.cbd_percentage::float8,
+            ps.average_rating::float8, ps.rating_count,
             ps.created_at,
             -- Terpene Jaccard: |A ∩ B| / (|A| + |B| - |A ∩ B|)
             COALESCE(
