@@ -95,20 +95,22 @@ What it does:
 - Installs Rust (rustup), Node.js 20.x, PostgreSQL 16, Caddy
 - Creates `potspot` system user, database, and systemd service
 - Builds the Rust API binary and SvelteKit frontend
+- Installs MinIO for S3-compatible photo storage
 - Generates secrets, configures Caddy reverse proxy
 - Starts everything via systemd
 
-**Note:** MinIO is not installed. Photo uploads fall back to local disk storage.
-Install MinIO separately if needed: https://min.io/docs/minio/linux/index.html
+MinIO Console is available at `http://localhost:9001` (credentials in `/opt/potspot/.env`).
 
 ### Managing the native install
 
 ```bash
-systemctl status potspot-api   # API health
-systemctl status caddy         # Reverse proxy
-systemctl status postgresql    # Database
-journalctl -u potspot-api -f   # API logs
-journalctl -u caddy -f         # Caddy logs
+systemctl status potspot-api    # API health
+systemctl status potspot-minio  # Object storage
+systemctl status caddy          # Reverse proxy
+systemctl status postgresql     # Database
+journalctl -u potspot-api -f    # API logs
+journalctl -u potspot-minio -f  # MinIO logs
+journalctl -u caddy -f          # Caddy logs
 
 # Updates
 cd /opt/potspot && git pull origin main

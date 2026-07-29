@@ -1,0 +1,36 @@
+[Unit]
+Description=MinIO Object Storage
+Documentation=https://min.io/docs/minio/linux/index.html
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=minio
+Group=minio
+WorkingDirectory=/var/lib/minio
+EnvironmentFile=/opt/potspot/.env
+ExecStart=/usr/local/bin/minio server /var/lib/minio/data --console-address ":9001"
+ExecStartPost=/bin/bash -c "sleep 2 && /usr/local/bin/mc alias set local http://localhost:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} --api s3v4 && /usr/local/bin/mc mb --ignore-existing local/${MINIO_BUCKET}"
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=minio
+
+# Security
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/minio
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+# Raise file descriptor limit (MinIO needs this)
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

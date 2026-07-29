@@ -1,8 +1,8 @@
 [Unit]
 Description=PotSpot API Server
 Documentation=https://github.com/cpntodd/PotSpot
-After=network.target postgresql.service
-Wants=postgresql.service
+After=network.target postgresql.service potspot-minio.service
+Wants=postgresql.service potspot-minio.service
 
 [Service]
 Type=simple

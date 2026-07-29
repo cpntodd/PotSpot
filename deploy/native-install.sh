@@ -184,12 +184,47 @@ else
     apt-get update -qq > /dev/null 2>&1
     apt-get install -y -qq caddy > /dev/null 2>&1
     echo -e "${GREEN}  Caddy installed.${NC}"
+echo -e "${GREEN}  Caddy installed.${NC}"
 fi
 
 # ============================================================================
-# Step 6: Clone and build
+# Step 6: Install MinIO (Object Storage)
 # ============================================================================
-echo -e "${YELLOW}[6/8] Cloning and building PotSpot...${NC}"
+echo -e "${YELLOW}[6/9] Installing MinIO...${NC}"
+
+MINIO_BINARY="/usr/local/bin/minio"
+MC_BINARY="/usr/local/bin/mc"
+MINIO_DATA="/var/lib/minio"
+
+if [[ -x "$MINIO_BINARY" ]] && [[ -x "$MC_BINARY" ]]; then
+    echo -e "${GREEN}  MinIO already installed.${NC}"
+else
+    echo "  Downloading MinIO server..."
+    curl -fsSL -o "$MINIO_BINARY" https://dl.min.io/server/minio/release/linux-amd64/minio
+    chmod +x "$MINIO_BINARY"
+
+    echo "  Downloading MinIO client (mc)..."
+    curl -fsSL -o "$MC_BINARY" https://dl.min.io/client/mc/release/linux-amd64/mc
+    chmod +x "$MC_BINARY"
+
+    echo -e "${GREEN}  MinIO binaries installed.${NC}"
+fi
+
+# Create minio system user
+if ! id -u minio &>/dev/null; then
+    useradd --system --home-dir "$MINIO_DATA" --shell /usr/sbin/nologin minio
+fi
+
+# Create data directory
+mkdir -p "$MINIO_DATA/data"
+chown -R minio:minio "$MINIO_DATA"
+
+echo -e "${GREEN}  MinIO ready.${NC}"
+
+# ============================================================================
+# Step 7: Clone and build
+# ============================================================================
+echo -e "${YELLOW}[7/9] Cloning and building PotSpot...${NC}"
 
 # Create potspot system user
 if ! id -u potspot &>/dev/null; then
@@ -226,7 +261,7 @@ chown -R potspot:potspot "$INSTALL_PATH"
 # ============================================================================
 # Step 7: Configure
 # ============================================================================
-echo -e "${YELLOW}[7/8] Configuring PotSpot...${NC}"
+echo -e "${YELLOW}[8/9] Configuring PotSpot...${NC}"
 
 cd "$INSTALL_PATH"
 
@@ -285,14 +320,17 @@ echo -e "${GREEN}  Configuration written.${NC}"
 # ============================================================================
 # Step 8: Install systemd service and start
 # ============================================================================
-echo -e "${YELLOW}[8/8] Starting services...${NC}"
+echo -e "${YELLOW}[9/9] Starting services...${NC}"
 
-# Install systemd unit
+# Install systemd units
 cp "$INSTALL_PATH/deploy/potspot-api.service" /etc/systemd/system/potspot-api.service
+cp "$INSTALL_PATH/deploy/potspot-minio.service" /etc/systemd/system/potspot-minio.service
 systemctl daemon-reload
 
-# Start and enable services
+# Start and enable services (order matters: minio before api)
 systemctl enable --now postgresql
+systemctl enable --now potspot-minio
+sleep 3  # Let MinIO start and create the bucket
 systemctl enable --now potspot-api
 systemctl enable --now caddy
 
@@ -327,17 +365,20 @@ fi
 echo ""
 echo -e "  ${GREEN}Services:${NC}"
 echo -e "    systemctl status potspot-api"
+echo -e "    systemctl status potspot-minio"
 echo -e "    systemctl status caddy"
 echo -e "    systemctl status postgresql"
 echo ""
 echo -e "  ${GREEN}Logs:${NC}"
 echo -e "    journalctl -u potspot-api -f"
+echo -e "    journalctl -u potspot-minio -f"
 echo -e "    journalctl -u caddy -f"
 echo ""
 echo -e "  ${GREEN}Config:${NC}"
 echo -e "    ${INSTALL_PATH}/.env"
 echo -e "    /etc/caddy/Caddyfile"
 echo ""
+echo -e "  ${GREEN}MinIO Console:${NC}  http://localhost:9001"
+echo -e "    Login: MINIO_ACCESS_KEY / MINIO_SECRET_KEY from ${INSTALL_PATH}/.env"
+echo ""
 echo -e "  ${YELLOW}Point DNS for ${DOMAIN} to this server's IP.${NC}"
-echo -e "  ${YELLOW}MinIO is not installed. Photo uploads will use local disk.${NC}"
-echo -e "  ${YELLOW}To install MinIO: https://min.io/docs/minio/linux/index.html${NC}"
