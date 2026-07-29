@@ -1,11 +1,13 @@
 <script lang="ts">
   import { apiRequest } from '$lib/api';
   import { page } from '$app/stores';
-  import type { StrainDetail } from '$lib/types';
+  import type { StrainDetail, StrainSummary } from '$lib/types';
+  import StrainCard from '$lib/components/StrainCard.svelte';
 
   let strain = $state<StrainDetail | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  let similarStrains = $state<StrainSummary[]>([]);
 
   async function fetchStrain() {
     loading = true;
@@ -14,6 +16,8 @@
 
     try {
       strain = await apiRequest<StrainDetail>(`/strains/${id}`);
+      // Fetch similar strains in parallel
+      similarStrains = await apiRequest<StrainSummary[]>(`/strains/${id}/similar`);
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'Failed to load strain';
     } finally {
@@ -199,6 +203,18 @@
             </div>
           {/if}
         {/each}
+      </section>
+    {/if}
+
+    <!-- Similar Strains -->
+    {#if similarStrains.length > 0}
+      <section class="section">
+        <h2>Similar Strains</h2>
+        <div class="strain-grid">
+          {#each similarStrains as s}
+            <StrainCard strain={s} />
+          {/each}
+        </div>
       </section>
     {/if}
 

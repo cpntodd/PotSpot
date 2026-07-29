@@ -29,7 +29,7 @@ pub struct PublicStrain {
 }
 
 /// Summary view of a strain for list/search results.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct StrainSummary {
     pub id: Uuid,
     pub name: String,

@@ -9,7 +9,7 @@ use crate::errors::{AppError, AppResult};
 use crate::models::{
     CreateStrainRequest, RateStrainRequest, StrainListResponse, StrainSearchQuery, UpdateStrainRequest,
 };
-use crate::services::{comment_service, strain_service, vetting_service};
+use crate::services::{comment_service, similarity, strain_service, vetting_service};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -181,6 +181,7 @@ async fn remove(
 /// POST /api/v1/strains/:id/rate
 ///
 /// Rate a strain from 1 to 5. One rating per user per strain.
+/// Invalidates the similarity cache for this strain.
 async fn rate(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -203,6 +204,9 @@ async fn rate(
     .bind(req.rating)
     .execute(&state.pool)
     .await?;
+
+    // Invalidate similarity cache (ratings affect collaborative filtering)
+    similarity::invalidate_cache(strain_id);
 
     Ok(Json(serde_json::json!({
         "message": "Rating submitted successfully",
@@ -257,11 +261,14 @@ async fn get_revisions(
 }
 
 /// GET /api/v1/strains/:id/similar
+///
+/// Returns strains similar to the given strain based on terpene profile,
+/// effect profile, type, and collaborative filtering.
 async fn similar(
-    State(_state): State<AppState>,
-    Path(_id): Path<uuid::Uuid>,
+    State(state): State<AppState>,
+    Path(id): Path<uuid::Uuid>,
 ) -> AppResult<Json<Vec<crate::models::StrainSummary>>> {
-    // TODO: Implement similarity algorithm (Phase 5)
-    Ok(Json(vec![]))
+    let strains = similarity::get_similar_strains(&state.pool, id, 10).await?;
+    Ok(Json(strains))
 }
 

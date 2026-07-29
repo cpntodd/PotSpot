@@ -4,3 +4,4 @@ pub mod photo_service;
 pub mod vault_service;
 pub mod comment_service;
 pub mod vetting_service;
+pub mod similarity;
