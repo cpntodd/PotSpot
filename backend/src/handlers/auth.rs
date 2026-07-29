@@ -313,12 +313,7 @@ async fn profile(
     .fetch_one(&state.pool)
     .await?;
 
-    let rating_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM strain_ratings WHERE user_id = $1",
-    )
-    .bind(auth.user_id)
-    .fetch_one(&state.pool)
-    .await?;
+    let rating_count: i64 = 0; // Ratings removed -- feature not yet launched
 
     let comment_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM comments WHERE user_id = $1 AND is_deleted = false",

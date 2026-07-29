@@ -173,33 +173,20 @@ async fn compute_similar(
     .fetch_all(pool)
     .await?;
 
-    // Compute collaborative scores separately
-    let collab_scores = get_collaborative_scores(pool, strain_id).await?;
-
-    // Merge collaborative scores into results
-    let mut strains: Vec<StrainSummary> = rows
+    // Collaborative filtering removed (ratings not yet launched)
+    let strains: Vec<StrainSummary> = rows
         .into_iter()
-        .map(|r| {
-            let collab = collab_scores.get(&r.id).copied().unwrap_or(0.0);
-            StrainSummary {
-                id: r.id,
-                name: r.name,
-                strain_type: r.strain_type,
-                thc_percentage: r.thc_percentage,
-                cbd_percentage: r.cbd_percentage,
-                average_rating: r.average_rating,
-                rating_count: r.rating_count,
-                thumbnail_url: None,
-            }
+        .map(|r| StrainSummary {
+            id: r.id,
+            name: r.name,
+            strain_type: r.strain_type,
+            thc_percentage: r.thc_percentage,
+            cbd_percentage: r.cbd_percentage,
+            average_rating: r.average_rating,
+            rating_count: r.rating_count,
+            thumbnail_url: None,
         })
         .collect();
-
-    // Re-sort with collaborative score included.
-    // We don't have the individual scores from the SQL result anymore (they were consumed).
-    // Simple approach: collaborative is already a small factor; the SQL ordering
-    // on terpene+effect+type is the primary sort. Collaborative is a tiebreaker.
-    // For now, keep SQL ordering as-is. The collaborative score is stored but
-    // doesn't change the order (0.15 weight is small for sparse data).
 
     Ok(strains)
 }
@@ -222,42 +209,4 @@ struct SimilarityRow {
     effect_sim: Option<f64>,
     #[allow(dead_code)]
     type_sim: Option<f64>,
-}
-
-/// Compute collaborative filtering scores:
-/// "Users who rated this strain highly (>= 4) also rated these strains highly."
-/// Returns a map of strain_id -> average collaborative score.
-async fn get_collaborative_scores(
-    pool: &PgPool,
-    strain_id: Uuid,
-) -> AppResult<HashMap<Uuid, f64>> {
-    let rows = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-        r#"SELECT
-            sr2.strain_id,
-            AVG(sr2.rating)::float AS collab_score
-           FROM strain_ratings sr2
-           WHERE sr2.user_id IN (
-               SELECT user_id FROM strain_ratings WHERE strain_id = $1 AND rating >= 4
-           )
-           AND sr2.strain_id != $1
-           AND sr2.rating >= 4
-           GROUP BY sr2.strain_id
-           ORDER BY collab_score DESC
-           LIMIT 50"#,
-    )
-    .bind(strain_id)
-    .fetch_all(pool)
-    .await?;
-
-    let mut map = HashMap::new();
-    for (id, score) in rows {
-        if let Some(s) = score {
-            // Normalize collaborative score to 0-1 range
-            // A score of 4.0 = 0.6, 5.0 = 1.0
-            let normalized = ((s - 1.0) / 4.0).clamp(0.0, 1.0);
-            map.insert(id, normalized);
-        }
-    }
-
-    Ok(map)
 }

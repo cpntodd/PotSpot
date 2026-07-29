@@ -183,9 +183,3 @@ pub struct StrainListResponse {
     pub page: i64,
     pub per_page: i64,
 }
-
-/// Request body for rating a strain.
-#[derive(Debug, Deserialize)]
-pub struct RateStrainRequest {
-    pub rating: i16,
-}
