@@ -1,5 +1,5 @@
 <script lang="ts">
-  let ageVerified = $state(false);
+  let ageVerified = false;
 
   function confirmAge() {
     ageVerified = true;

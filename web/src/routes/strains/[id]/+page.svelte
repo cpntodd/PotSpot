@@ -4,10 +4,10 @@
   import type { StrainDetail, StrainSummary } from '$lib/types';
   import StrainCard from '$lib/components/StrainCard.svelte';
 
-  let strain = $state<StrainDetail | null>(null);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
-  let similarStrains = $state<StrainSummary[]>([]);
+  let strain: StrainDetail | null = null;
+  let loading = true;
+  let error: string | null = null;
+  let similarStrains: StrainSummary[] = [];
 
   async function fetchStrain() {
     loading = true;

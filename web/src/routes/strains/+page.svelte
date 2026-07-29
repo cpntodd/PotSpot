@@ -20,20 +20,20 @@
     per_page: number;
   }
 
-  let strains: StrainSummary[] = $state([]);
-  let total = $state(0);
-  let page = $state(1);
-  let perPage = $state(20);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
+  let strains: StrainSummary[] = [];
+  let total = 0;
+  let page = 1;
+  let perPage = 20;
+  let loading = true;
+  let error: string | null = null;
 
   // Search/filter state
-  let searchQuery = $state('');
-  let filterType = $state('');
-  let filterThcMin = $state('');
-  let filterThcMax = $state('');
-  let filterRatingMin = $state('');
-  let sortBy = $state('newest');
+  let searchQuery = '';
+  let filterType = '';
+  let filterThcMin = '';
+  let filterThcMax = '';
+  let filterRatingMin = '';
+  let sortBy = 'newest';
 
   async function fetchStrains() {
     loading = true;
@@ -70,7 +70,7 @@
     fetchStrains();
   }
 
-  const totalPages = $derived(Math.ceil(total / perPage));
+  $: totalPages = Math.ceil(total / perPage);
 
   // Initial load
   import { onMount } from 'svelte';
