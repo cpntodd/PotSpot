@@ -9,6 +9,7 @@ pub struct PublicStrain {
     pub id: Uuid,
     pub name: String,
     #[serde(rename = "type")]
+    #[sqlx(rename = "type")]
     pub strain_type: String,
     pub thc_percentage: Option<f64>,
     pub cbd_percentage: Option<f64>,

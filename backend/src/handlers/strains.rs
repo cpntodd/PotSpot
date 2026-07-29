@@ -16,14 +16,14 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list))
         .route("/", post(create))
-        .route("/{id}", get(detail))
-        .route("/{id}", put(update))
-        .route("/{id}", delete(remove))
-        .route("/{id}/rate", post(rate))
-        .route("/{id}/similar", get(similar))
-        .route("/{id}/comments", get(get_comments))
-        .route("/{id}/comments", post(post_comment))
-        .route("/{id}/revisions", get(get_revisions))
+        .route("/:id", get(detail))
+        .route("/:id", put(update))
+        .route("/:id", delete(remove))
+        .route("/:id/rate", post(rate))
+        .route("/:id/similar", get(similar))
+        .route("/:id/comments", get(get_comments))
+        .route("/:id/comments", post(post_comment))
+        .route("/:id/revisions", get(get_revisions))
 }
 
 /// GET /api/v1/strains

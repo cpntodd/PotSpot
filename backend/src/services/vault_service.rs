@@ -23,7 +23,7 @@ pub async fn list_vault(
 
     // Fetch saved public strains
     let saved = sqlx::query_as::<_, StrainSummaryRow>(
-        r#"SELECT ps.id, ps.name, ps.type AS strain_type,
+        r#"SELECT ps.id, ps.name, ps.type::text AS strain_type,
                   ps.thc_percentage, ps.cbd_percentage,
                   ps.average_rating, ps.rating_count,
                   ps.created_at
