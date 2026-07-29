@@ -77,12 +77,54 @@ curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh
 
 ---
 
-## Manual VPS Deployment
+## Native Debian Install (No Docker)
+
+Installs PotSpot directly on the OS: Rust, Node.js, PostgreSQL, Caddy, systemd.
+Best for bare-metal Debian 12 servers or LXCs where you don't want container overhead.
+
+```bash
+curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/native-install.sh | sudo bash
+```
+
+With a pre-set domain:
+```bash
+sudo DOMAIN=potspot.example.com bash deploy/native-install.sh
+```
+
+What it does:
+- Installs Rust (rustup), Node.js 20.x, PostgreSQL 16, Caddy
+- Creates `potspot` system user, database, and systemd service
+- Builds the Rust API binary and SvelteKit frontend
+- Generates secrets, configures Caddy reverse proxy
+- Starts everything via systemd
+
+**Note:** MinIO is not installed. Photo uploads fall back to local disk storage.
+Install MinIO separately if needed: https://min.io/docs/minio/linux/index.html
+
+### Managing the native install
+
+```bash
+systemctl status potspot-api   # API health
+systemctl status caddy         # Reverse proxy
+systemctl status postgresql    # Database
+journalctl -u potspot-api -f   # API logs
+journalctl -u caddy -f         # Caddy logs
+
+# Updates
+cd /opt/potspot && git pull origin main
+cd backend && cargo build --release
+cd ../web && npm ci && npm run build
+systemctl restart potspot-api caddy
+```
+
+---
+
+## Manual VPS Deployment (Docker)
 - Docker and Docker Compose installed
 - A domain name pointed to your VPS
 - Ports 80 and 443 open in firewall
 
-## Quick Deploy
+## Quick Deploy (Docker)
 
 ```bash
 # 1. Clone the repository

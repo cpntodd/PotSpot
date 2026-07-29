@@ -1,0 +1,33 @@
+[Unit]
+Description=PotSpot API Server
+Documentation=https://github.com/cpntodd/PotSpot
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=potspot
+Group=potspot
+WorkingDirectory=/opt/potspot
+EnvironmentFile=/opt/potspot/.env
+Environment=RUST_LOG=info
+ExecStart=/opt/potspot/target/release/potspot-api
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=potspot-api
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/potspot
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target
