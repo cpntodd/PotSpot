@@ -27,7 +27,7 @@ pub async fn search_strains(
         r#"SELECT
             ps.id, ps.name, ps.type::text AS strain_type,
             ps.thc_percentage::float8, ps.cbd_percentage::float8,
-            ps.average_rating, ps.rating_count,
+            ps.average_rating::float8, ps.rating_count,
             ps.created_at
         FROM public_strains ps
         WHERE ps.is_active = true"#,
@@ -202,7 +202,7 @@ pub async fn get_strain_detail(pool: &PgPool, strain_id: Uuid) -> AppResult<Stra
         r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
-                  average_rating, rating_count, is_active,
+                  average_rating::float8, rating_count, is_active,
                   created_at, updated_at, version
            FROM public_strains WHERE id = $1 AND is_active = true"#,
     )
@@ -356,7 +356,7 @@ pub async fn update_strain(
         r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
-                  average_rating, rating_count, is_active,
+                  average_rating::float8, rating_count, is_active,
                   created_at, updated_at, version
            FROM public_strains WHERE id = $1"#,
     )
@@ -415,7 +415,7 @@ pub async fn update_strain(
         r#"SELECT id, name, type::text, thc_percentage::float8, cbd_percentage::float8,
                   description, color, smell, flavor, breeder, lineage,
                   growing_difficulty::text, flowering_time_days,
-                  average_rating, rating_count, is_active,
+                  average_rating::float8, rating_count, is_active,
                   created_at, updated_at, version
            FROM public_strains WHERE id = $1"#,
     )
