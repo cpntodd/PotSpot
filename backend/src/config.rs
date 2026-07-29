@@ -22,10 +22,19 @@ pub struct Config {
     pub host: String,
     pub port: u16,
     pub cors_origin: String,
+    /// Publicly accessible URL of this API server (for OAuth redirects).
+    /// Defaults to http://localhost:{port} in development.
+    pub public_url: String,
 }
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
+        let port: u16 = env::var("PORT")
+            .unwrap_or_else(|_| "3000".into())
+            .parse()?;
+        let cors_origin = env::var("CORS_ORIGIN")
+            .unwrap_or_else(|_| "http://localhost:5173".into());
+
         Ok(Self {
             database_url: env::var("DATABASE_URL")
                 .map_err(|_| anyhow::anyhow!("DATABASE_URL must be set"))?,
@@ -53,11 +62,10 @@ impl Config {
             apple_client_id: env::var("APPLE_CLIENT_ID").ok(),
             apple_client_secret: env::var("APPLE_CLIENT_SECRET").ok(),
             host: env::var("HOST").unwrap_or_else(|_| "0.0.0.0".into()),
-            port: env::var("PORT")
-                .unwrap_or_else(|_| "3000".into())
-                .parse()?,
-            cors_origin: env::var("CORS_ORIGIN")
-                .unwrap_or_else(|_| "http://localhost:5173".into()),
+            port,
+            cors_origin,
+            public_url: env::var("PUBLIC_URL")
+                .unwrap_or_else(|_| format!("http://localhost:{}", port)),
         })
     }
 }

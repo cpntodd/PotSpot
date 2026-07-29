@@ -252,7 +252,7 @@ async fn oauth_redirect(
     State(state): State<AppState>,
 ) -> AppResult<axum::response::Redirect> {
     let provider = parse_provider(&provider_str)?;
-    let redirect_uri = format!("{}/api/v1/auth/oauth/callback", state.config.cors_origin);
+    let redirect_uri = format!("{}/api/v1/auth/oauth/callback", state.config.public_url);
     let url = oauth::get_authorization_url(&provider, &redirect_uri, &state.config)?;
     Ok(axum::response::Redirect::temporary(&url))
 }
@@ -266,7 +266,7 @@ async fn oauth_callback(
     axum::extract::Query(params): axum::extract::Query<oauth::OAuthCallbackQuery>,
 ) -> AppResult<axum::response::Redirect> {
     let provider = OAuthProvider::Google;
-    let redirect_uri = format!("{}/api/v1/auth/oauth/callback", state.config.cors_origin);
+    let redirect_uri = format!("{}/api/v1/auth/oauth/callback", state.config.public_url);
 
     let (access_token, refresh_token) =
         oauth::handle_oauth_callback(&provider, &params.code, &redirect_uri, &state.config, &state.pool).await?;
