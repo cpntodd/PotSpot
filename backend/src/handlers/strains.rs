@@ -7,7 +7,7 @@ use axum::{
 use crate::auth::middleware::AuthUser;
 use crate::errors::{AppError, AppResult};
 use crate::models::{
-    CreateStrainRequest, StrainListResponse, StrainSearchQuery, UpdateStrainRequest,
+    CreateStrainRequest, RateStrainRequest, StrainListResponse, StrainSearchQuery, UpdateStrainRequest,
 };
 use crate::services::{comment_service, similarity, strain_service, vetting_service};
 use crate::state::AppState;
@@ -19,6 +19,7 @@ pub fn router() -> Router<AppState> {
         .route("/:id", get(detail))
         .route("/:id", put(update))
         .route("/:id", delete(remove))
+        .route("/:id/rate", post(rate))
         .route("/:id/similar", get(similar))
         .route("/:id/comments", get(get_comments))
         .route("/:id/comments", post(post_comment))
@@ -174,6 +175,41 @@ async fn remove(
 
     Ok(Json(serde_json::json!({
         "message": "Strain deactivated successfully",
+    })))
+}
+
+/// POST /api/v1/strains/:id/rate
+///
+/// Rate a strain from 1 to 5. One rating per user per strain.
+/// Invalidates the similarity cache for this strain.
+async fn rate(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(strain_id): Path<uuid::Uuid>,
+    Json(req): Json<RateStrainRequest>,
+) -> AppResult<Json<serde_json::Value>> {
+    if req.rating < 1 || req.rating > 5 {
+        return Err(AppError::BadRequest("Rating must be between 1 and 5".into()));
+    }
+
+    // Upsert: insert or update the user's rating
+    sqlx::query(
+        r#"INSERT INTO strain_ratings (strain_id, user_id, rating)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (strain_id, user_id)
+           DO UPDATE SET rating = $3, created_at = NOW()"#,
+    )
+    .bind(strain_id)
+    .bind(auth.user_id)
+    .bind(req.rating)
+    .execute(&state.pool)
+    .await?;
+
+    // Invalidate similarity cache (ratings affect collaborative filtering)
+    similarity::invalidate_cache(strain_id);
+
+    Ok(Json(serde_json::json!({
+        "message": "Rating submitted successfully",
     })))
 }
 

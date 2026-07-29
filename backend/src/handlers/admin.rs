@@ -117,7 +117,11 @@ async fn stats(
     .fetch_one(&state.pool)
     .await?;
 
-    let rating_count: i64 = 0; // Ratings removed -- feature not yet launched
+    let rating_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM strain_ratings",
+    )
+    .fetch_one(&state.pool)
+    .await?;
 
     let pending_vetting: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM strain_revisions WHERE status = 'pending'",
