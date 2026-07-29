@@ -3,6 +3,7 @@
   import { apiRequest } from '$lib/api';
   import { auth, isLoggedIn } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
+  import BudIcon from '$lib/components/BudIcon.svelte';
 
   interface ProfileData {
     id: string;
@@ -328,7 +329,11 @@
               <div class="list-content">
                 {#each reviews as r}
                   <div class="card list-item">
-                    <p>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                    <div class="profile-star-row">
+                      {#each Array(5) as _, i}
+                        <BudIcon size={16} filled={i < r.rating} />
+                      {/each}
+                    </div>
                     <p class="text-muted" style="font-size:0.75rem;">
                       <a href="/strains/{r.strain_id}">View strain</a> &middot; {new Date(r.created_at).toLocaleDateString()}
                     </p>
@@ -468,6 +473,7 @@
   .type-sativa { background: #2d6a4f; color: #95d5b2; }
   .type-indica { background: #5a189a; color: #c77dff; }
   .type-hybrid { background: #e76f51; color: #ffddd2; }
+  .profile-star-row { display: flex; align-items: center; gap: 2px; }
   @media (max-width: 640px) {
     .dashboard-grid { grid-template-columns: 1fr; }
     .banner { height: 120px; }

@@ -249,6 +249,24 @@ pub async fn get_strain_detail(pool: &PgPool, strain_id: Uuid) -> AppResult<Stra
     })
 }
 
+/// Fetch all photos for a strain, newest first.
+pub async fn get_strain_photos(
+    pool: &PgPool,
+    strain_id: uuid::Uuid,
+) -> Result<Vec<crate::models::StrainPhoto>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::StrainPhoto>(
+        r#"SELECT id, strain_id, user_id, s3_key, thumbnail_s3_key, content_type,
+           file_size_bytes, width, height, is_primary,
+           average_rating::float8 as average_rating, rating_count, created_at
+           FROM strain_photos
+           WHERE strain_id = $1
+           ORDER BY is_primary DESC, created_at DESC"#,
+    )
+    .bind(strain_id)
+    .fetch_all(pool)
+    .await
+}
+
 /// Create a new public strain. Returns the created strain ID.
 #[allow(clippy::too_many_arguments)]
 pub async fn create_strain(

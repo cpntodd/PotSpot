@@ -2,121 +2,32 @@
   export let icon: string;
   export let size = 20;
 
-  // Map terpene icon IDs to SVG paths and colors
-  const icons: Record<string, { path: string; color: string; viewBox: string }> = {
-    myrcene: {
-      viewBox: '0 0 24 24',
-      color: '#7cb342',
-      path: 'M12 2C8 2 4 6 3 12c-1 6 2 10 9 10s10-4 9-10C20 6 16 2 12 2zm0 2c1 0 3 1 4 3l-3 5h-2l-3-5c1-2 3-3 4-3zm-2 9h4l-2 8-2-8z',
-    },
-    limonene: {
-      viewBox: '0 0 24 24',
-      color: '#f9a825',
-      path: 'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 3c1.7 0 3.3.6 4.5 1.7L12 12l-4.5-5.3C8.7 5.6 10.3 5 12 5zm-6 6.5l4 4.7-1.5 4.9c-2.3-1-4-3.1-4.5-5.7l2-3.9zm12 0l2 3.9c-.5 2.6-2.2 4.7-4.5 5.7L14 16.2l4-4.7z',
-    },
-    pinene: {
-      viewBox: '0 0 24 24',
-      color: '#2e7d32',
-      path: 'M12 2L3 20h18L12 2zm0 3.5l6 11.5H6l6-11.5zm0 3l-3 6h6l-3-6z',
-    },
-    caryophyllene: {
-      viewBox: '0 0 24 24',
-      color: '#c62828',
-      path: 'M12 3C8 3 4 6 3 11l2-1v2c0-4 3-7 7-7s7 3 7 7-3 7-7 7c-1.5 0-3-.5-4-1.5l-1.5 1.5C8 20.5 10 21 12 21c5 0 9-4 9-9s-4-9-9-9zm-2 6v2l3-1v2l3-1v2l3-1-9 2z',
-    },
-    linalool: {
-      viewBox: '0 0 24 24',
-      color: '#7b1fa2',
-      path: 'M12 2C8 2 5 4 3 8l2 1c1-2 4-4 7-4s6 2 7 4l2-1c-2-4-5-6-9-6zm-2 6c-1 1-2 2.5-2 4s1 3 2 4l1-1c-1-1-1-2-1-3s0-2 1-3l-1-1zm4 0l-1 1c1 1 1 2 1 3s0 2-1 3l1 1c1-1 2-2.5 2-4s-1-3-2-4zm-2 8c-2 2-2 4 0 6l1-1c-1-1-1-2 0-3l-1-2zm4 0l-1 2c1 1 1 2 0 3l1 1c2-2 2-4 0-6z',
-    },
-    humulene: {
-      viewBox: '0 0 24 24',
-      color: '#558b2f',
-      path: 'M12 2C7 2 3 6 3 11c0 2 .7 4 1.8 5.5L3 21l4.5-1.8C9 20.3 11 21 13 21c5 0 9-4 9-9s-4-9-10-9zm0 2c3 0 5.5 2 6.5 4.5l-4 4.5-2-2-5 5 1.5 1.5 3.5-3.5 2 2 5-5.5C19.5 13 17 17 13 17c-1.5 0-3-.5-4-1.5L7.5 17l-2-2L7 13.5C6 12 5.5 10.5 5.5 9c.5-3 3-5 6.5-5z',
-    },
-    terpinolene: {
-      viewBox: '0 0 24 24',
-      color: '#e91e63',
-      path: 'M12 2C8 2 4 5 3 10c1-3 4-5 8-5 4 0 7 3 8 6l2-1c-1-4-5-8-10-8zm0 4c-3 0-5 2-6 5h2c1-2 2-3 4-3s3 1 4 3h2c-1-3-3-5-6-5zm-2 8l-1 2s1 1 2 1l1 3 1-3c1 0 2-1 2-1l-1-2-2 1-2-1z',
-    },
-    ocimene: {
-      viewBox: '0 0 24 24',
-      color: '#66bb6a',
-      path: 'M12 3C8 3 5 6 5 10v1c-1 0-2 1-2 2s1 2 2 2h1c1 3 3 5 6 5s5-2 6-5h1c1 0 2-1 2-2s-1-2-2-2v-1c0-4-3-7-7-7zm0 2c2 0 4 1 5 3L12 12 7 8c1-2 3-3 5-3zm-5 7h10l-3 6H10l-3-6z',
-    },
-    valencene: {
-      viewBox: '0 0 24 24',
-      color: '#ff8f00',
-      path: 'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 3c3.9 0 7 3.1 7 7s-3.1 7-7 7-7-3.1-7-7 3.1-7 7-7zm0 3c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm0 1.5c.4 0 .7.1 1 .3L11 12l2 2.2c.3.2.6.3 1 .3.8 0 1.5-.3 2-.8l.7.7c-.7.7-1.7 1.1-2.7 1.1-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5z',
-    },
-    geraniol: {
-      viewBox: '0 0 24 24',
-      color: '#e91e63',
-      path: 'M12 2C8 2 5 4 4 8c1-2 3-3 5-3 2 0 4 1 5 3l2-1c-1-3-4-5-8-5zm0 4c-1 0-2 .5-3 1.5V7c0-2 2-3 3-3s3 1 3 3c0 1-1 2-2 3l1 2c2-1 3-3 3-5 0-3-3-5-6-5s-6 2-6 5c0 2 1 4 2.5 5.5l1.5-1.5C8 13 7 11.5 7 10c0-2 2-3 4-3z',
-    },
-    bisabolol: {
-      viewBox: '0 0 24 24',
-      color: '#fff9c4',
-      path: 'M12 3C9 3 6 5 5 8l2 1c1-2 3-3 5-3s4 1 5 3l2-1c-1-3-3-5-7-5zm-2 7c-1 0-2 .5-2.5 1.5L7 11c-1 0-2 .5-2.5 1.5l4 1.5 1.5-4C9 11 8.5 10 10 10zm4 0c1.5 0 2 1 2 1.5l1.5 4 4-1.5C21 12.5 20 12 19 11l-.5.5C18 10.5 17 10 16 10c-1 0-2 .5-2 1l-2 5-2-5c0-.5-1-1-2-1z',
-    },
-    eucalyptol: {
-      viewBox: '0 0 24 24',
-      color: '#4caf50',
-      path: 'M12 2L4 20h16L12 2zm0 3.5l2.5 5.5H14l-2-4.5-2 4.5H9.5L12 5.5zM9 12h2l1 4 1-4h2l-3 8-3-8z',
-    },
-    nerolidol: {
-      viewBox: '0 0 24 24',
-      color: '#f48fb1',
-      path: 'M12 2C8 2 5 5 4 9c1-2 3-3 5-3 2 0 4 1 5 3l2-1c-1-3-4-5-8-5h4zm-6 9l-1 3c0 1 1 2 2 2s2-1 2-2l-1-3H7zm5 0l-1 3c0 1 1 2 2 2s2-1 2-2l-1-3h-2zm5 0l-1 3c0 1 1 2 2 2s2-1 2-2l-1-3h-2z',
-    },
-    phytol: {
-      viewBox: '0 0 24 24',
-      color: '#8bc34a',
-      path: 'M12 3C9 3 6 5 5 8l2 1c1-2 3-3 5-3s4 1 5 3l2-1c-1-3-3-5-7-5zm-2 7v2h4v-2h-4zm-1 4l-2 8h10l-2-8H9zm1 2h4l1 4h-6l1-4z',
-    },
-    camphene: {
-      viewBox: '0 0 24 24',
-      color: '#388e3c',
-      path: 'M12 2L3 20h18L12 2zm0 3l5.5 11h-2.5l-3-6-3 6H6.5L12 5zm-3 13h6l-3 3-3-3z',
-    },
-    phellandrene: {
-      viewBox: '0 0 24 24',
-      color: '#43a047',
-      path: 'M12 2C7 2 3 6 3 11c0 3 1.5 5.5 3.5 7L3 21l3-3c1.5 1 3.5 2 6 2 5 0 9-4 9-9s-4-9-9-9zm0 2c1.5 0 3 .5 4 1.5L12 9 8 5.5C9 4.5 10.5 4 12 4zm-5 4l5 5-5 5 2-5-2-5zm10 0l-2 5 2 5-5-5 5-5z',
-    },
-    carene: {
-      viewBox: '0 0 24 24',
-      color: '#1b5e20',
-      path: 'M12 2L3 20h18L12 2zm0 3.5l3 6h-2l-1-2-1 2H9l3-6zm-4 9l1 3h6l1-3H8z',
-    },
-    sabinene: {
-      viewBox: '0 0 24 24',
-      color: '#33691e',
-      path: 'M12 2L2 20h20L12 2zm0 3l6 12h-3l-3-6-3 6H6l6-12zm-2 12h4l-2 4-2-4z',
-    },
-    terpinene: {
-      viewBox: '0 0 24 24',
-      color: '#827717',
-      path: 'M12 2C7 2 3 5 2 10c1-3 4-5 7-5 4 0 7 2 9 5l2-1c-1-4-5-7-10-7zm0 4c-2 0-4 1-5 3h2l3-2 3 2h2c-1-2-3-3-5-3zm-2 6v6l2-2 2 2v-6h-4z',
-    },
-    borneol: {
-      viewBox: '0 0 24 24',
-      color: '#5d4037',
-      path: 'M12 2L3 20h18L12 2zm0 3l2 4h-1l-1-2-1 2h-1l2-4zm-3 7h2l1 4 1-4h2l-3 8-3-8z',
-    },
+  const icons: Record<string, { color: string; paths: string }> = {
+    myrcene:       { color: '#e8b84b', paths: '<ellipse cx="12" cy="13" rx="6" ry="8"/><path d="M7 7 C8 4,11 3,12 3 C13 3,16 4,17 7"/>' },
+    limonene:      { color: '#ffb300', paths: '<ellipse cx="12" cy="13" rx="5.5" ry="7"/><line x1="12" y1="6" x2="12" y2="2"/>' },
+    pinene:        { color: '#43a047', paths: '<path d="M12 2 L6 9 L9 9 L4 15 L8 15 L3 20 L21 20 L16 15 L20 15 L15 9 L18 9 Z"/>' },
+    caryophyllene: { color: '#d32f2f', paths: '<circle cx="12" cy="13" r="7"/><path d="M12 6 C10 8,7 11,11 15 C14 19,16 16,12 6Z" fill="none"/>' },
+    linalool:      { color: '#7b1fa2', paths: '<line x1="12" y1="21" x2="12" y2="9"/><ellipse cx="12" cy="7" rx="3" ry="2"/><ellipse cx="12" cy="5" rx="2.5" ry="1.8"/><ellipse cx="12" cy="3" rx="2" ry="1.5"/><path d="M9 8 L7 6 M15 8 L17 6" fill="none"/>' },
+    humulene:      { color: '#795548', paths: '<path d="M8 4 L16 4 L18 10 L16 14 L14 16 L12 14 L10 16 L8 14 L6 10 Z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="10" y1="11" x2="14" y2="11"/>' },
+    terpinolene:   { color: '#00897b', paths: '<path d="M9 16 C6 14,6 9,9 7 C12 5,15 6,17 8 C19 10,18 15,15 17 C12 19,9 18,9 16Z"/><path d="M12 7 C11 5,12 3,12 3 C12 3,13 5,12 7"/><line x1="12" y1="3" x2="12" y2="1"/>' },
+    ocimene:       { color: '#66bb6a', paths: '<path d="M12 3 C8 6,5 9,7 13 C9 16,14 17,17 14 C20 12,18 8,15 6 C13 5,12 3,12 3Z"/><path d="M12 3 L12 1 M12 14 L12 21"/>' },
+    valencene:     { color: '#e64a19', paths: '<circle cx="12" cy="13" r="8"/><path d="M12 5 L12 2 M8 7 L6 5 M16 7 L18 5"/><ellipse cx="10" cy="14" rx="1" ry="0.6" fill="none"/>' },
+    bisabolol:     { color: '#3949ab', paths: '<circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="4" rx="2.5" ry="3.5"/><ellipse cx="12" cy="20" rx="2.5" ry="3.5"/><ellipse cx="4" cy="12" rx="3.5" ry="2.5"/><ellipse cx="20" cy="12" rx="3.5" ry="2.5"/>' },
+    geraniol:      { color: '#c2185b', paths: '<circle cx="12" cy="13" r="5"/><path d="M12 8 C10 6,9 4,11 2 C13 4,12 7,12 8Z M12 8 C14 6,15 4,13 2 C11 4,12 7,12 8Z"/><path d="M12 18 C11 19,10 20,9 21 M12 18 C13 19,14 20,15 21"/>' },
+    terpineol:     { color: '#607d8b', paths: '<line x1="12" y1="21" x2="12" y2="9"/><circle cx="8" cy="8" r="3.5"/><circle cx="16" cy="8" r="3.5"/><circle cx="12" cy="4" r="3"/>' },
+    camphene:      { color: '#689f38', paths: '<path d="M12 1 L5 6 L8 6 L3 12 L7 12 L2 18 L22 18 L17 12 L21 12 L16 6 L19 6 Z"/><rect x="10" y="18" width="4" height="5" rx="1"/>' },
+    sabinene:      { color: '#9ccc65', paths: '<path d="M12 2 C8 3,5 7,6 11 C7 15,10 16,12 16 C14 16,17 15,18 11 C19 7,16 3,12 2Z"/><line x1="12" y1="16" x2="12" y2="21"/>' },
+    delta3carene:  { color: '#00695c', paths: '<path d="M12 1 L7 8 L10 8 L5 14 L9 14 L4 20 L20 20 L15 14 L19 14 L14 8 L17 8 Z"/><rect x="10" y="1" width="4" height="3" rx="1"/>' },
+    phellandrene:  { color: '#d81b60', paths: '<path d="M12 3 C16 5,19 8,17 12 C19 15,16 18,12 15 C8 18,5 15,7 12 C5 8,8 5,12 3Z"/><line x1="12" y1="15" x2="12" y2="21"/>' },
+    eucalyptol:    { color: '#00838f', paths: '<path d="M12 3 C16 6,19 10,17 13 C16 14,14 15,13 15 C14 17,13 19,12 19 C11 19,10 17,11 15 C10 15,8 14,7 13 C5 10,8 6,12 3Z"/><circle cx="12" cy="5" r="2" fill="none"/><line x1="12" y1="19" x2="12" y2="21"/>' },
+    guaiol:        { color: '#512da8', paths: '<rect x="5" y="5" width="14" height="16" rx="1.5"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/>' },
+    nerolidol:     { color: '#afb42b', paths: '<circle cx="12" cy="13" r="3.5"/><ellipse cx="7" cy="8" rx="4" ry="5"/><ellipse cx="17" cy="8" rx="4" ry="5"/><circle cx="12" cy="4" r="2.5"/><line x1="12" y1="16" x2="12" y2="21"/>' },
+    phytol:        { color: '#4db6ac', paths: '<path d="M12 2 C10 3,7 6,7 10 C7 14,9 17,12 17 C15 17,17 14,17 10 C17 6,14 3,12 2Z"/><path d="M12 2 C14 4,16 6,16 9 C16 12,14 14,12 14"/><path d="M10 7 L8 6 M14 7 L16 6"/><line x1="12" y1="17" x2="12" y2="21"/>' },
   };
 
-  $: iconData = icons[icon] || icons['myrcene'];
+  $: data = icons[icon] || { color: '#9d9d9d', paths: '<circle cx="12" cy="12" r="8"/>' };
 </script>
 
-<svg
-  width={size}
-  height={size}
-  viewBox={iconData.viewBox}
-  fill={iconData.color}
-  xmlns="http://www.w3.org/2000/svg"
-  aria-label={icon}
-  role="img"
->
-  <path d={iconData.path} />
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={data.color} stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+  {@html data.paths}
 </svg>

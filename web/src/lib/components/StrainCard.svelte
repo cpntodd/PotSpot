@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { StrainSummary } from '$lib/types';
+  import BudIcon from '$lib/components/BudIcon.svelte';
 
   export let strain: StrainSummary;
 
@@ -21,11 +22,6 @@
     }
   }
 
-  function renderStars(rating: number | null): string {
-    if (rating === null || rating === undefined) return 'No ratings';
-    const full = Math.round(rating);
-    return '★'.repeat(full) + '☆'.repeat(5 - full);
-  }
 </script>
 
 <a href="/strains/{strain.id}" class="strain-card card">
@@ -43,7 +39,9 @@
   <div class="card-footer">
     {#if strain.average_rating}
       <span class="rating" title="{strain.average_rating.toFixed(1)} / 5">
-        {renderStars(strain.average_rating)}
+        {#each Array(5) as _, i}
+          <BudIcon size={16} filled={i < Math.round(strain.average_rating)} />
+        {/each}
         <span class="text-muted">({strain.rating_count})</span>
       </span>
     {:else}
@@ -90,6 +88,9 @@
   }
 
   .rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
     color: var(--accent);
     font-size: 0.9rem;
   }

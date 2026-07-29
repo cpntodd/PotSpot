@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PotSpot - Strain Photo Gallery Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #1e1e1e;
+    --surface: #252526;
+    --border: #3e3e42;
+    --text: #d4d4d4;
+    --text-muted: #9d9d9d;
+    --text-heading: #ffffff;
+    --accent: #f09040;
+    --radius: 8px;
+    --font-display: 'VT323', 'Courier New', monospace;
+    --font-body: 'Space Mono', 'Courier New', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+/* Header */
+.site-header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+}
+.site-header .container { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent); text-decoration: none; }
+nav { display: flex; gap: 20px; }
+nav a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+nav a:hover, nav a.active { color: var(--accent); }
+
+/* Strain Header */
+.strain-header { margin: 32px 0 24px; display: flex; gap: 24px; align-items: flex-start; }
+.strain-header h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--text-heading); }
+.badges { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+.badge {
+    display: inline-block; font-size: 0.75rem; padding: 3px 8px;
+    border-radius: 4px; font-weight: bold; text-transform: uppercase;
+}
+.badge-hybrid { background: #e76f5122; color: #e76f51; border: 1px solid #e76f51; }
+.badge-thc { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.rating { display: flex; align-items: center; gap: 8px; color: var(--accent); font-size: 1.1rem; }
+
+/* Photo Gallery - Imgur style */
+.photo-gallery { margin: 32px 0; }
+.photo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.photo-item img {
+    width: 100%;
+    display: block;
+    max-height: 600px;
+    object-fit: contain;
+    background: #111;
+}
+.photo-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.photo-uploader { display: flex; align-items: center; gap: 6px; }
+.avatar-sm {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: bold;
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    margin: 24px 0;
+    transition: border-color 0.2s;
+}
+.upload-zone:hover { border-color: var(--accent); }
+.upload-icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+/* Description */
+.section { margin: 32px 0; }
+.section h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--text-heading); margin-bottom: 12px; }
+.details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-item { background: var(--surface); padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); }
+.detail-item .label { font-size: 0.75rem; color: var(--text-muted); }
+
+/* Interactive */
+.interactive { border-top: 1px solid var(--border); padding-top: 24px; margin: 32px 0; }
+.bud-row { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.bud { font-size: 1.8rem; opacity: 0.3; cursor: pointer; transition: opacity 0.15s; }
+.bud.active { opacity: 1; }
+.bud:hover { opacity: 0.7; }
+.comment-box { display: flex; gap: 8px; margin: 16px 0; }
+.comment-box input {
+    flex: 1; background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px; font-family: var(--font-body); font-size: 0.9rem;
+}
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px 20px; cursor: pointer; font-family: var(--font-body);
+    font-size: 0.85rem; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.btn:hover { border-color: var(--accent); }
+.btn-primary:hover { background: #f5a623; }
+.comment { background: var(--surface); padding: 12px 16px; border-radius: var(--radius); margin-bottom: 8px; border: 1px solid var(--border); }
+.comment .meta { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+
+/* Footer */
+.site-footer { border-top: 1px solid var(--border); padding: 16px 0; text-align: center; margin-top: 48px; }
+.site-footer p { font-size: 0.8rem; color: var(--text-muted); }
+
+@media (max-width: 600px) {
+    .strain-header { flex-direction: column; }
+    .details-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container">
+        <a href="/" class="logo">PotSpot</a>
+        <nav>
+            <a href="#">Catalog</a>
+            <a href="#">My Vault</a>
+            <a href="#">+ Add Strain</a>
+            <a href="#" class="active">My Profile</a>
+            <a href="#">Log Off</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="strain-header">
+        <div>
+            <h1>Blue Dream</h1>
+            <div class="badges">
+                <span class="badge badge-hybrid">Hybrid</span>
+                <span class="badge badge-thc">THC 18%</span>
+                <span class="badge badge-thc">CBD 0.1%</span>
+            </div>
+            <div class="rating">
+                <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span>4.2 / 5</span>
+                <span style="color: var(--text-muted);">(12 ratings)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== IMGUR-STYLE PHOTO GALLERY ===== -->
+    <div class="photo-gallery">
+        <!-- Photo 1 -->
+        <div class="photo-item">
+            <div style="background: linear-gradient(135deg, #1a3a2a 0%, #2d5a3f 50%, #1a3a2a 100%); height: 400px; display: flex; align-items: center; justify-content: center; color: #95d5b2; font-size: 4rem;">
+                &#9769;
+            </div>
+            <div class="photo-meta">
+                <div class="photo-uploader">
+                    <div class="avatar-sm">O</div>
+                    <span>oddsoul</span>
+                </div>
+                <span>2 days ago</span>
+            </div>
+        </div>
+
+        <!-- Photo 2 -->
+        <div class="photo-item">
+            <div style="background: linear-gradient(135deg, #2a1a3a 0%, #4a2d6a 50%, #2a1a3a 100%); height: 350px; display: flex; align-items: center; justify-content: center; color: #c77dff; font-size: 4rem;">
+                &#9769;
+            </div>
+            <div class="photo-meta">
+                <div class="photo-uploader">
+                    <div class="avatar-sm">G</div>
+                    <span>green_thumb42</span>
+                </div>
+                <span>1 week ago</span>
+            </div>
+        </div>
+
+        <!-- Photo 3 -->
+        <div class="photo-item">
+            <div style="background: linear-gradient(135deg, #3a2a1a 0%, #6a4d2d 50%, #3a2a1a 100%); height: 320px; display: flex; align-items: center; justify-content: center; color: #f5a623; font-size: 4rem;">
+                &#9769;
+            </div>
+            <div class="photo-meta">
+                <div class="photo-uploader">
+                    <div class="avatar-sm">B</div>
+                    <span>budtender_99</span>
+                </div>
+                <span>2 weeks ago</span>
+            </div>
+        </div>
+
+        <!-- Upload Zone -->
+        <label class="upload-zone">
+            <div class="upload-icon">&#128247;</div>
+            <p>Click to add photos</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">JPEG, PNG, or WebP</p>
+        </label>
+    </div>
+
+    <!-- Description -->
+    <section class="section">
+        <h2>Description</h2>
+        <p>Blue Dream is a sativa-dominant hybrid marijuana strain made by crossing Blueberry with Haze. This strain produces a balanced high, along with effects like cerebral stimulation and full-body relaxation.</p>
+    </section>
+
+    <!-- Details -->
+    <section class="section">
+        <h2>Details</h2>
+        <div class="details-grid">
+            <div class="detail-item"><span class="label">Breeder</span><br>DJ Short</div>
+            <div class="detail-item"><span class="label">Lineage</span><br>Blueberry &times; Haze</div>
+            <div class="detail-item"><span class="label">Growing</span><br>Moderate</div>
+            <div class="detail-item"><span class="label">Flowering</span><br>70 days</div>
+            <div class="detail-item"><span class="label">Color</span><br>Light green, blue hues</div>
+            <div class="detail-item"><span class="label">Aroma</span><br>Sweet berry, earthy</div>
+        </div>
+    </section>
+
+    <!-- Interactive -->
+    <section class="interactive">
+        <h2>Rate &amp; Review</h2>
+        <div class="bud-row">
+            <span style="color: var(--text-muted);">Your rating:</span>
+            <span class="bud active">&#127807;</span>
+            <span class="bud active">&#127807;</span>
+            <span class="bud active">&#127807;</span>
+            <span class="bud active">&#127807;</span>
+            <span class="bud">&#127807;</span>
+        </div>
+        <div class="comment-box">
+            <input type="text" placeholder="Share your thoughts on this strain...">
+            <button class="btn btn-primary">Post</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0;">Comments (3)</p>
+        <div class="comment"><p class="meta">green_thumb42 &middot; 3 days ago</p><p>Best Blue Dream I've grown. The haze really comes through in the flavor profile.</p></div>
+        <div class="comment"><p class="meta">budtender_99 &middot; 1 week ago</p><p>Classic strain. Always a crowd pleaser at the dispensary.</p></div>
+        <div class="comment"><p class="meta">Anonymous &middot; 2 weeks ago</p><p>Great for daytime use. Doesn't make you too tired.</p></div>
+    </section>
+
+</div>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>&copy; 2026 PotSpot. Community-driven cannabis strain catalog. &middot; <a href="#" style="color: var(--accent);">Disclaimer</a></p>
+    </div>
+</footer>
+
+</body>
+</html>

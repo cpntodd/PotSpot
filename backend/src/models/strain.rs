@@ -118,6 +118,24 @@ pub struct PrivateStrain {
     pub updated_at: DateTime<Utc>,
 }
 
+/// A photo uploaded to a strain, with rating info.
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct StrainPhoto {
+    pub id: Uuid,
+    pub strain_id: Uuid,
+    pub user_id: Uuid,
+    pub s3_key: String,
+    pub thumbnail_s3_key: Option<String>,
+    pub content_type: String,
+    pub file_size_bytes: i32,
+    pub width: i32,
+    pub height: i32,
+    pub is_primary: bool,
+    pub average_rating: Option<f64>,
+    pub rating_count: i32,
+    pub created_at: DateTime<Utc>,
+}
+
 /// Request body for creating/updating a private strain.
 #[derive(Debug, Deserialize)]
 pub struct PrivateStrainRequest {

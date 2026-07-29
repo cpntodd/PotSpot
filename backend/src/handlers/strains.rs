@@ -25,6 +25,8 @@ pub fn router() -> Router<AppState> {
         .route("/:id/comments", post(post_comment))
         .route("/:id/revisions", get(get_revisions))
         .route("/:id/photos", post(upload_photo))
+        .route("/:id/photos", get(get_photos))
+        .route("/:id/photos/:photo_id/rate", post(rate_photo))
         .route("/terpenes", get(list_terpenes))
         .route("/effects", get(list_effects))
 }
@@ -333,6 +335,86 @@ async fn upload_photo(
     }
 
     Err(AppError::BadRequest("No file provided".into()))
+}
+
+/// GET /api/v1/strains/:id/photos
+///
+/// Returns all photos for a strain with presigned URLs and rating info.
+async fn get_photos(
+    State(state): State<AppState>,
+    Path(strain_id): Path<uuid::Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    let photos = crate::services::strain_service::get_strain_photos(&state.pool, strain_id).await?;
+
+    let mut result = Vec::new();
+    for p in photos {
+        let photo_url = crate::s3::presign_get_url(&state.config, &p.s3_key).await.ok();
+        let thumb_url = if let Some(ref tk) = p.thumbnail_s3_key {
+            crate::s3::presign_get_url(&state.config, tk).await.ok()
+        } else {
+            None
+        };
+        result.push(serde_json::json!({
+            "id": p.id,
+            "s3_key": p.s3_key,
+            "photo_url": photo_url,
+            "thumbnail_url": thumb_url,
+            "content_type": p.content_type,
+            "width": p.width,
+            "height": p.height,
+            "is_primary": p.is_primary,
+            "average_rating": p.average_rating,
+            "rating_count": p.rating_count,
+            "user_id": p.user_id,
+            "created_at": p.created_at,
+        }));
+    }
+
+    Ok(Json(serde_json::json!(result)))
+}
+
+/// POST /api/v1/strains/:id/photos/:photo_id/rate
+///
+/// Rate a photo from 1 to 5. One rating per user per photo.
+async fn rate_photo(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path((strain_id, photo_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+    Json(req): Json<RateStrainRequest>,
+) -> AppResult<Json<serde_json::Value>> {
+    if req.rating < 1 || req.rating > 5 {
+        return Err(AppError::BadRequest("Rating must be between 1 and 5".into()));
+    }
+
+    // Verify the photo belongs to this strain
+    let count: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM strain_photos WHERE id = $1 AND strain_id = $2",
+    )
+    .bind(photo_id)
+    .bind(strain_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    if count.0 == 0 {
+        return Err(AppError::NotFound("Photo not found for this strain".into()));
+    }
+
+    // Upsert rating
+    sqlx::query(
+        r#"INSERT INTO photo_ratings (photo_id, user_id, rating)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (photo_id, user_id)
+           DO UPDATE SET rating = $3, created_at = NOW()"#,
+    )
+    .bind(photo_id)
+    .bind(auth.user_id)
+    .bind(req.rating)
+    .execute(&state.pool)
+    .await?;
+
+    Ok(Json(serde_json::json!({
+        "message": "Photo rating submitted successfully",
+    })))
 }
 
 /// GET /api/v1/strains/terpenes

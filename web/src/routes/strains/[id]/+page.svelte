@@ -5,6 +5,7 @@
   import type { StrainDetail, StrainSummary } from '$lib/types';
   import StrainCard from '$lib/components/StrainCard.svelte';
   import TerpeneIcon from '$lib/components/TerpeneIcon.svelte';
+  import BudIcon from '$lib/components/BudIcon.svelte';
 
   let strain: StrainDetail | null = null;
   let loading = true;
@@ -122,11 +123,6 @@
     }
   }
 
-  function renderStars(rating: number): string {
-    const full = Math.round(rating);
-    return '★'.repeat(full) + '☆'.repeat(5 - full);
-  }
-
   function categoryLabel(cat: string): string {
     switch (cat) {
       case 'positive': return 'Positive';
@@ -174,7 +170,11 @@
         </div>
         {#if strain.average_rating}
           <div class="rating-display">
-            <span class="stars">{renderStars(strain.average_rating)}</span>
+            <span class="stars">
+              {#each Array(5) as _, i}
+                <BudIcon size={22} filled={i < Math.round(strain.average_rating)} />
+              {/each}
+            </span>
             <span>{strain.average_rating.toFixed(1)} / 5</span>
             <span class="text-muted">({strain.rating_count} rating{strain.rating_count !== 1 ? 's' : ''})</span>
           </div>
@@ -183,7 +183,10 @@
 
       {#if strain.primary_photo_url}
         <div class="strain-photo">
-          <img src={strain.primary_photo_url} alt={strain.name} />
+          <a href="/strains/{strain.id}/gallery" class="photo-link">
+            <img src={strain.primary_photo_url} alt={strain.name} />
+            <span class="photo-gallery-badge">View Gallery</span>
+          </a>
         </div>
       {/if}
     </div>
@@ -302,7 +305,7 @@
                 on:click={() => submitRating(star)}
                 disabled={ratingSubmitting}
                 title="{star} bud{star !== 1 ? 's' : ''}"
-              >&#127807;</button>
+              ><BudIcon size={24} filled={star <= userRating} /></button>
             {/each}
           </div>
           {#if ratingSubmitting}<span class="text-muted">Submitting...</span>{/if}
@@ -414,6 +417,26 @@
     object-fit: cover;
   }
 
+  .photo-link {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .photo-gallery-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(30, 30, 30, 0.85);
+    color: var(--accent);
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    font-family: var(--font-body);
+  }
+
   .section {
     margin-bottom: var(--space-xl);
   }
@@ -486,12 +509,15 @@
 
   .interactive-section { border-top: 1px solid var(--border); padding-top: var(--space-lg); }
   .rating-widget { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-sm) 0; }
-  .bud-rating { display: flex; gap: 2px; }
+  .bud-rating { display: flex; gap: 3px; align-items: center; }
   .bud-btn {
-    background: none; border: none; font-size: 1.5rem; cursor: pointer;
-    opacity: 0.3; transition: opacity 0.15s; padding: 0 2px;
+    background: none; border: none; cursor: pointer;
+    opacity: 0.3; transition: opacity 0.15s; padding: 0;
+    line-height: 0;
   }
   .bud-btn.active { opacity: 1; }
   .bud-btn:hover { opacity: 0.7; }
+  .rating-display { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+  .stars { display: flex; align-items: center; gap: 1px; }
   .comment-list { max-height: 400px; overflow-y: auto; }
 </style>
