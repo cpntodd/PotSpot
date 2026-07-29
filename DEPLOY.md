@@ -31,7 +31,7 @@ export DOMAIN=potspot.yourdomain.com
 sudo bash deploy/proxmox-deploy.sh
 ```
 
-This creates an Ubuntu 24.04 LXC container (2 CPU, 2GB RAM, 20GB disk), installs Docker, clones the repo, generates secrets, and starts the full stack.
+This creates a Debian 12 LXC container (2 CPU, 2GB RAM, 20GB disk), installs Docker, clones the repo, generates secrets, and starts the full stack.
 
 ### Option B: Deploy inside an existing LXC/VPS
 
@@ -53,7 +53,7 @@ curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh
 | CPU | 1 core | 2-4 cores |
 | RAM | 1 GB | 2-4 GB |
 | Disk | 10 GB | 20+ GB |
-| OS | Ubuntu 24.04 | Ubuntu 24.04 |
+| OS | Debian 12 | Debian 12 |
 
 ---
 

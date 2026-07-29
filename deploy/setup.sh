@@ -1,6 +1,6 @@
 #!/bin/bash
 # PotSpot -- LXC Container Setup Script
-# Run this INSIDE an existing Ubuntu/Debian LXC container or VPS.
+# Run this INSIDE an existing Debian LXC container or VPS.
 #
 # Usage (inside the container):
 #   curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo bash

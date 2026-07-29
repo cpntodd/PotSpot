@@ -6,11 +6,11 @@
 #   1. Run: bash -c "$(wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/docker.sh)"
 #   2. Inside the new CT: curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo DOMAIN=your.domain.com bash
 #
-# Alternative (this script -- creates Ubuntu CT from scratch):
+# Alternative (this script -- creates Debian CT from scratch):
 #   sudo bash deploy/proxmox-deploy.sh
 #
 # What it does:
-#   1. Creates an Ubuntu 24.04 LXC container (2 CPU, 2GB RAM, 20GB disk)
+#   1. Creates a Debian 12 LXC container (2 CPU, 2GB RAM, 20GB disk)
 #   2. Installs Docker + Docker Compose inside the container
 #   3. Clones the PotSpot repo
 #   4. Generates secure random secrets
@@ -31,7 +31,7 @@ CT_SWAP="${CT_SWAP:-512}"                # MB
 CT_CORES="${CT_CORES:-2}"                # CPU cores
 CT_DISK="${CT_DISK:-20}"                 # GB
 STORAGE="${STORAGE:-local-lvm}"          # Proxmox storage pool
-UBUNTU_TEMPLATE="${UBUNTU_TEMPLATE:-local:vztmpl/ubuntu-24.04-standard_24.04-1_amd64.tar.zst}"
+DEBIAN_TEMPLATE="${DEBIAN_TEMPLATE:-local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst}"
 
 # ============================================================================
 # Colors
@@ -43,13 +43,13 @@ echo -e "${GREEN}  PotSpot -- Proxmox LXC Deployer${NC}"
 echo -e "${GREEN}============================================${NC}"
 
 # ============================================================================
-# Step 1: Download Ubuntu template if needed
+# Step 1: Download Debian template if needed
 # ============================================================================
-echo -e "${YELLOW}[1/6] Checking Ubuntu 24.04 template...${NC}"
-if ! pveam list "$STORAGE" 2>/dev/null | grep -q "ubuntu-24.04"; then
+echo -e "${YELLOW}[1/6] Checking Debian 12 template...${NC}"
+if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
     echo "  Downloading template..."
     pveam update
-    pveam download local ubuntu-24.04-standard_24.04-1_amd64.tar.zst
+    pveam download local debian-12-standard_12.7-1_amd64.tar.zst
 fi
 echo -e "${GREEN}  Template ready.${NC}"
 
@@ -73,7 +73,7 @@ if pct status "$CT_ID" &>/dev/null; then
 fi
 
 # Create the container
-pct create "$CT_ID" "$UBUNTU_TEMPLATE" \
+pct create "$CT_ID" "$DEBIAN_TEMPLATE" \
     --hostname "$CT_HOSTNAME" \
     --memory "$CT_MEMORY" \
     --swap "$CT_SWAP" \
