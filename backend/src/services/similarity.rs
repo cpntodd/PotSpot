@@ -127,9 +127,9 @@ async fn compute_similar(
             ) AS effect_sim,
             -- Type match
             CASE
-                WHEN ps.type::text = $2 THEN 1.0
-                WHEN ps.type::text = 'hybrid' OR $2 = 'hybrid' THEN 0.5
-                ELSE 0.0
+                WHEN ps.type::text = $2 THEN 1.0::float8
+                WHEN ps.type::text = 'hybrid' OR $2 = 'hybrid' THEN 0.5::float8
+                ELSE 0.0::float8
             END AS type_sim
         FROM public_strains ps
         LEFT JOIN strain_terpenes st1 ON st1.strain_id = $1
