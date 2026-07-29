@@ -2,7 +2,11 @@
 # PotSpot -- Proxmox LXC Deployment Script
 # Run this ON THE PROXMOX HOST to create and deploy a ready-to-run LXC container.
 #
-# Usage:
+# Quick start (recommended: use community-scripts Docker LXC):
+#   1. Run: bash -c "$(wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/docker.sh)"
+#   2. Inside the new CT: curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo DOMAIN=your.domain.com bash
+#
+# Alternative (this script -- creates Ubuntu CT from scratch):
 #   sudo bash deploy/proxmox-deploy.sh
 #
 # What it does:

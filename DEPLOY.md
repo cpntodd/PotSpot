@@ -2,6 +2,21 @@
 
 ## Proxmox LXC (Recommended -- 5 minute deploy)
 
+### Easiest: Use Community-Scripts Docker LXC
+
+Instead of manual Docker setup, use the pre-built Docker LXC from [community-scripts.org](https://community-scripts.org/scripts):
+
+```bash
+# From Proxmox host shell:
+bash -c "$(wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/docker.sh)"
+
+# Follow the prompts to create a Docker-ready LXC container
+# Then SSH into the container and run:
+curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo DOMAIN=potspot.yourdomain.com bash
+```
+
+This gives you a Proxmox-optimized LXC with Docker pre-installed. The setup script handles the rest.
+
 ### Option A: Deploy from Proxmox host (fully automated)
 
 From your Proxmox host, run:
