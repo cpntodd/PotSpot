@@ -10,10 +10,23 @@ set -euo pipefail
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
 # Configuration -- provide via environment or edit below
-DOMAIN="${DOMAIN:-potspot.example.com}"
+DOMAIN="${DOMAIN:-}"
 POTSPOT_DIR="${POTSPOT_DIR:-/opt/potspot}"
 CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-8080}"
 CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}"
+
+# Detect LAN IP for fallback when no domain
+LAN_IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -n1)
+LAN_IP="${LAN_IP:-$(ip -4 addr show | awk '/inet / && !/127\.0\.0\.1/ {print $2}' | cut -d/ -f1 | head -n1)}"
+LAN_IP="${LAN_IP:-127.0.0.1}"
+
+if [[ -z "$DOMAIN" ]]; then
+    USING_DOMAIN=false
+    PUBLIC_URL="http://${LAN_IP}:${CADDY_HTTP_PORT}"
+else
+    USING_DOMAIN=true
+    PUBLIC_URL="https://${DOMAIN}"
+fi
 
 echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  PotSpot -- Container Setup${NC}"
@@ -78,8 +91,8 @@ JWT_REFRESH_SECRET=$(openssl rand -hex 32)
 MINIO_ACCESS_KEY=$(openssl rand -hex 16)
 MINIO_SECRET_KEY=$(openssl rand -hex 16)
 MINIO_BUCKET=potspot-photos
-PUBLIC_URL=https://$DOMAIN
-CORS_ORIGIN=https://$DOMAIN
+PUBLIC_URL=${PUBLIC_URL}
+CORS_ORIGIN=${PUBLIC_URL}
 CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
 CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
@@ -89,7 +102,11 @@ ENVEOF
 fi
 
 # Update domain in Caddyfile
-sed -i "s/potspot.example.com/$DOMAIN/g" docker/Caddyfile
+if $USING_DOMAIN; then
+    sed -i "s/potspot.example.com/$DOMAIN/g" docker/Caddyfile
+else
+    sed -i "s/potspot.example.com/:${CADDY_HTTP_PORT}/g" docker/Caddyfile
+fi
 
 echo -e "${GREEN}  Repository ready.${NC}"
 
@@ -127,10 +144,15 @@ echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  PotSpot is running!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
-echo -e "  Domain:    ${YELLOW}https://$DOMAIN${NC}"
-if [[ "${CADDY_HTTP_PORT}" != "80" ]]; then
-  echo -e "  HTTP port: ${YELLOW}${CADDY_HTTP_PORT}${NC} (reverse proxy target)"
-  echo -e "  HTTPS port:${YELLOW}${CADDY_HTTPS_PORT}${NC}"
+if $USING_DOMAIN; then
+  echo -e "  Domain:    ${YELLOW}https://$DOMAIN${NC}"
+  if [[ "${CADDY_HTTP_PORT}" != "80" ]]; then
+    echo -e "  HTTP port: ${YELLOW}${CADDY_HTTP_PORT}${NC} (reverse proxy target)"
+    echo -e "  HTTPS port:${YELLOW}${CADDY_HTTPS_PORT}${NC}"
+  fi
+else
+  echo -e "  URL:       ${YELLOW}${PUBLIC_URL}${NC}"
+  echo -e "  ${YELLOW}No domain -- serving via HTTP on LAN IP${NC}"
 fi
 echo -e "  Directory: ${YELLOW}$POTSPOT_DIR${NC}"
 echo ""

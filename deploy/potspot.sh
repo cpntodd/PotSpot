@@ -132,29 +132,46 @@ function check_docker() {
 function install() {
   check_docker
 
-  # Prompt for domain
+  # Prompt for domain (optional -- falls back to LAN IP)
   if [[ -z "${DOMAIN:-}" ]]; then
-    echo -e "${TAB}${YW}Enter your domain name (e.g. potspot.example.com):${CL}"
+    LAN_IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1 | head -n1)
+    LAN_IP="${LAN_IP:-$(ip -4 addr show | awk '/inet / && !/127\.0\.0\.1/ {print $2}' | cut -d/ -f1 | head -n1)}"
+    LAN_IP="${LAN_IP:-127.0.0.1}"
+    echo -e "${TAB}${YW}Enter your domain name (leave blank to use LAN IP ${LAN_IP}):${CL}"
     read -r DOMAIN
-    if [[ -z "$DOMAIN" ]]; then
-      msg_error "Domain is required. Exiting."
-      exit 1
-    fi
   fi
 
-  # Prompt for Google OAuth (optional)
-  echo -e "${TAB}${YW}Enter Google OAuth Client ID (leave blank to skip):${CL}"
-  read -r GOOGLE_CLIENT_ID
-  echo -e "${TAB}${YW}Enter Google OAuth Client Secret (leave blank to skip):${CL}"
-  read -r GOOGLE_CLIENT_SECRET
+  if [[ -z "$DOMAIN" ]]; then
+    USING_DOMAIN=false
+    PUBLIC_URL="http://${LAN_IP}:${CADDY_HTTP_PORT:-8080}"
+  else
+    USING_DOMAIN=true
+    PUBLIC_URL="https://${DOMAIN}"
+  fi
 
-  # Prompt for Caddy ports (defaults avoid collision with NPM/nginx on 80/443)
+  # Prompt for Caddy ports
   echo -e "${TAB}${YW}Enter HTTP port for Caddy [8080]:${CL}"
   read -r CADDY_HTTP_PORT
   CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-8080}"
-  echo -e "${TAB}${YW}Enter HTTPS port for Caddy [8443]:${CL}"
-  read -r CADDY_HTTPS_PORT
-  CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}"
+
+  if $USING_DOMAIN; then
+    echo -e "${TAB}${YW}Enter HTTPS port for Caddy [8443]:${CL}"
+    read -r CADDY_HTTPS_PORT
+    CADDY_HTTPS_PORT="${CADDY_HTTPS_PORT:-8443}"
+  else
+    CADDY_HTTPS_PORT="8443"
+  fi
+
+  # Prompt for Google OAuth (requires a domain)
+  if $USING_DOMAIN; then
+    echo -e "${TAB}${YW}Enter Google OAuth Client ID (leave blank to skip):${CL}"
+    read -r GOOGLE_CLIENT_ID
+    echo -e "${TAB}${YW}Enter Google OAuth Client Secret (leave blank to skip):${CL}"
+    read -r GOOGLE_CLIENT_SECRET
+  else
+    GOOGLE_CLIENT_ID=""
+    GOOGLE_CLIENT_SECRET=""
+  fi
 
   msg_info "Cloning ${APP} repository"
   if [[ -d "$INSTALL_PATH" ]]; then
@@ -181,8 +198,8 @@ JWT_REFRESH_SECRET=${JWT_REFRESH}
 MINIO_ACCESS_KEY=${MINIO_KEY}
 MINIO_SECRET_KEY=${MINIO_SECRET}
 MINIO_BUCKET=potspot-photos
-PUBLIC_URL=https://${DOMAIN}
-CORS_ORIGIN=https://${DOMAIN}
+PUBLIC_URL=${PUBLIC_URL}
+CORS_ORIGIN=${PUBLIC_URL}
 CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
 CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
@@ -191,8 +208,13 @@ ENVEOF
   chmod 600 "$ENV_FILE"
   msg_ok "Generated secrets"
 
-  msg_info "Configuring Caddy for ${DOMAIN}"
-  sed -i "s/potspot.example.com/${DOMAIN}/g" "$CADDY_FILE"
+  if $USING_DOMAIN; then
+    msg_info "Configuring Caddy for ${DOMAIN}"
+    sed -i "s/potspot.example.com/${DOMAIN}/g" "$CADDY_FILE"
+  else
+    msg_info "Configuring Caddy for LAN IP (no domain)"
+    sed -i "s/potspot.example.com/:${CADDY_HTTP_PORT}/g" "$CADDY_FILE"
+  fi
   msg_ok "Configured Caddy"
 
   msg_info "Building and starting ${APP}"
@@ -223,11 +245,17 @@ UPDATEEOF
   done
 
   echo ""
-  msg_ok "${APP} is reachable at: ${BL}https://${DOMAIN}${CL}"
-  if [[ "${CADDY_HTTP_PORT:-8080}" != "80" ]]; then
-    echo -e "${TAB}${INFO} Caddy is on non-standard ports. Point your reverse proxy at:"
-    echo -e "${TAB}  HTTP:  localhost:${CADDY_HTTP_PORT:-8080}"
-    echo -e "${TAB}  HTTPS: localhost:${CADDY_HTTPS_PORT:-8443}"
+  if $USING_DOMAIN; then
+    msg_ok "${APP} is reachable at: ${BL}https://${DOMAIN}${CL}"
+    if [[ "${CADDY_HTTP_PORT:-8080}" != "80" ]]; then
+      echo -e "${TAB}${INFO} Caddy is on non-standard ports. Point your reverse proxy at:"
+      echo -e "${TAB}  HTTP:  localhost:${CADDY_HTTP_PORT:-8080}"
+      echo -e "${TAB}  HTTPS: localhost:${CADDY_HTTPS_PORT:-8443}"
+    fi
+  else
+    msg_ok "${APP} is reachable at: ${BL}${PUBLIC_URL}${CL}"
+    echo -e "${TAB}${INFO} No domain configured -- serving via HTTP on LAN IP"
+    echo -e "${TAB}${INFO} TLS and OAuth unavailable without a domain"
   fi
   echo ""
   echo -e "${TAB}${INFO} Useful commands:"
