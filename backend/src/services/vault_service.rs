@@ -15,7 +15,12 @@ pub async fn list_vault(
 ) -> AppResult<serde_json::Value> {
     // Fetch private strains
     let private = sqlx::query_as::<_, PrivateStrain>(
-        "SELECT * FROM private_strains WHERE user_id = $1 ORDER BY updated_at DESC",
+        "SELECT id, user_id, public_strain_id, name, \"type\"::text AS strain_type, \
+                thc_percentage::float8, cbd_percentage::float8, \
+                description, color, smell, flavor, breeder, lineage, \
+                growing_difficulty::text, flowering_time_days, \
+                personal_rating, personal_notes, created_at, updated_at \
+         FROM private_strains WHERE user_id = $1 ORDER BY updated_at DESC",
     )
     .bind(user_id)
     .fetch_all(pool)
@@ -113,7 +118,12 @@ pub async fn get_private_strain(
     strain_id: Uuid,
 ) -> AppResult<PrivateStrain> {
     let strain = sqlx::query_as::<_, PrivateStrain>(
-        "SELECT * FROM private_strains WHERE id = $1 AND user_id = $2",
+        "SELECT id, user_id, public_strain_id, name, \"type\"::text AS strain_type, \
+                thc_percentage::float8, cbd_percentage::float8, \
+                description, color, smell, flavor, breeder, lineage, \
+                growing_difficulty::text, flowering_time_days, \
+                personal_rating, personal_notes, created_at, updated_at \
+         FROM private_strains WHERE id = $1 AND user_id = $2",
     )
     .bind(strain_id)
     .bind(user_id)

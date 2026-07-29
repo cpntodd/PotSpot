@@ -114,7 +114,9 @@ async fn login(
 ) -> AppResult<Json<TokenResponse>> {
     // Look up user by email
     let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL",
+        "SELECT id, email, password_hash, display_name, role::text, \
+                age_verified, date_of_birth, created_at, updated_at \
+         FROM users WHERE email = $1 AND deleted_at IS NULL",
     )
     .bind(req.email.to_lowercase())
     .fetch_optional(&state.pool)
@@ -288,7 +290,9 @@ async fn profile(
     auth: AuthUser,
 ) -> AppResult<Json<serde_json::Value>> {
     let user = sqlx::query_as::<_, crate::models::User>(
-        "SELECT * FROM users WHERE id = $1",
+        "SELECT id, email, password_hash, display_name, role::text, \
+                age_verified, date_of_birth, created_at, updated_at \
+         FROM users WHERE id = $1",
     )
     .bind(auth.user_id)
     .fetch_one(&state.pool)
