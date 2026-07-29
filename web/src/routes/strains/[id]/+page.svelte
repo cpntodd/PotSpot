@@ -176,7 +176,6 @@
         <div class="tag-list">
           {#each strain.terpenes as terpene}
             <div class="tag terpene-tag">
-              <span class="terpene-icon">{terpene.icon}</span>
               <span>{terpene.name}</span>
             </div>
           {/each}
@@ -317,10 +316,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-  }
-
-  .terpene-icon {
-    font-size: 1rem;
   }
 
   .effect-category {
