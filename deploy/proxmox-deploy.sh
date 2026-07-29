@@ -43,9 +43,34 @@ echo -e "${GREEN}  PotSpot -- Proxmox LXC Deployer${NC}"
 echo -e "${GREEN}============================================${NC}"
 
 # ============================================================================
+# Step 0: Verify host environment
+# ============================================================================
+echo -e "${YELLOW}[1/7] Verifying Proxmox host...${NC}"
+
+# Check we're on a Proxmox VE host
+if ! command -v pveam &>/dev/null || ! command -v pct &>/dev/null; then
+    echo -e "${RED}ERROR: This script must run on a Proxmox VE host.${NC}"
+    echo "  pveam and pct are required but not found."
+    echo "  For non-Proxmox deployments, use deploy/setup.sh instead."
+    exit 1
+fi
+
+# Check for missing host tools
+for tool in openssl wget; do
+  if ! command -v "$tool" &>/dev/null; then
+    apt-get install -y -qq "$tool" > /dev/null 2>&1 || {
+      echo -e "${RED}ERROR: Failed to install ${tool}. Install it manually.${NC}"
+      exit 1
+    }
+  fi
+done
+
+echo -e "${GREEN}  Proxmox host verified.${NC}"
+
+# ============================================================================
 # Step 1: Download Debian template if needed
 # ============================================================================
-echo -e "${YELLOW}[1/6] Checking Debian 12 template...${NC}"
+echo -e "${YELLOW}[2/7] Checking Debian 12 template...${NC}"
 if ! pveam list "$STORAGE" 2>/dev/null | grep -q "debian-12"; then
     echo "  Downloading template..."
     pveam update
@@ -56,7 +81,7 @@ echo -e "${GREEN}  Template ready.${NC}"
 # ============================================================================
 # Step 2: Create LXC container
 # ============================================================================
-echo -e "${YELLOW}[2/6] Creating LXC container (ID: $CT_ID)...${NC}"
+echo -e "${YELLOW}[3/7] Creating LXC container (ID: $CT_ID)...${NC}"
 
 # Generate root password if not provided
 if [ -z "$CT_ROOT_PASSWORD" ]; then
@@ -90,7 +115,7 @@ echo -e "${GREEN}  Container created.${NC}"
 # ============================================================================
 # Step 3: Start container and install Docker
 # ============================================================================
-echo -e "${YELLOW}[3/6] Starting container and installing Docker...${NC}"
+echo -e "${YELLOW}[4/7] Starting container and installing Docker...${NC}"
 pct start "$CT_ID"
 
 # Wait for networking
@@ -102,7 +127,7 @@ pct exec "$CT_ID" -- bash -c '
     set -e
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
-    apt-get install -y -qq curl git ca-certificates > /dev/null 2>&1
+    apt-get install -y -qq curl git ca-certificates openssl > /dev/null 2>&1
 
     # Install Docker
     curl -fsSL https://get.docker.com | sh > /dev/null 2>&1
@@ -117,7 +142,7 @@ echo -e "${GREEN}  Docker installed.${NC}"
 # ============================================================================
 # Step 4: Clone PotSpot and configure
 # ============================================================================
-echo -e "${YELLOW}[4/6] Cloning PotSpot and generating secrets...${NC}"
+echo -e "${YELLOW}[5/7] Cloning PotSpot and generating secrets...${NC}"
 
 pct exec "$CT_ID" -- bash -c "
     set -e
@@ -151,7 +176,7 @@ echo -e "${GREEN}  Repository cloned and configured.${NC}"
 # ============================================================================
 # Step 5: Build and start
 # ============================================================================
-echo -e "${YELLOW}[5/6] Building and starting PotSpot...${NC}"
+echo -e "${YELLOW}[6/7] Building and starting PotSpot...${NC}"
 
 pct exec "$CT_ID" -- bash -c '
     set -e
@@ -165,7 +190,7 @@ sleep 10
 # ============================================================================
 # Step 6: Verify
 # ============================================================================
-echo -e "${YELLOW}[6/6] Verifying deployment...${NC}"
+echo -e "${YELLOW}[7/7] Verifying deployment...${NC}"
 
 pct exec "$CT_ID" -- bash -c '
     echo "--- Container Status ---"

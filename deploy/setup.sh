@@ -30,13 +30,22 @@ echo -e "${YELLOW}[1/4] Installing dependencies...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 
-if ! command -v docker &>/dev/null; then
-    curl -fsSL https://get.docker.com | sh > /dev/null 2>&1
-    systemctl enable --now docker
+# Install missing core tools
+missing_tools=()
+for tool in curl git openssl; do
+  if ! command -v "$tool" &>/dev/null; then
+    missing_tools+=("$tool")
+  fi
+done
+if [ ${#missing_tools[@]} -gt 0 ]; then
+  apt-get install -y -qq "${missing_tools[@]}" > /dev/null 2>&1
+  echo "  Installed: ${missing_tools[*]}"
 fi
 
-if ! command -v git &>/dev/null; then
-    apt-get install -y -qq git > /dev/null 2>&1
+if ! command -v docker &>/dev/null; then
+    echo "  Installing Docker..."
+    curl -fsSL https://get.docker.com | sh > /dev/null 2>&1
+    systemctl enable --now docker
 fi
 
 echo -e "${GREEN}  Docker $(docker --version | cut -d' ' -f3 | cut -d',' -f1)${NC}"

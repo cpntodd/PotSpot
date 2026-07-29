@@ -11,6 +11,17 @@ if ! command -v curl &>/dev/null; then
   apt-get update >/dev/null 2>&1
   apt-get install -y curl >/dev/null 2>&1
 fi
+
+# Ensure essential tools are present (git, openssl)
+for tool in git openssl; do
+  if ! command -v "$tool" &>/dev/null; then
+    apt-get install -y "$tool" >/dev/null 2>&1 || {
+      printf "\r\e[2K%b" "\033[91m ERROR: Failed to install ${tool}. Please install it manually. \033[m" >&2
+      exit 1
+    }
+  fi
+done
+
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func)
