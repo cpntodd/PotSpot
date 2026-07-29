@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import type { StrainDetail, StrainSummary } from '$lib/types';
   import StrainCard from '$lib/components/StrainCard.svelte';
+  import TerpeneIcon from '$lib/components/TerpeneIcon.svelte';
 
   let strain: StrainDetail | null = null;
   let loading = true;
@@ -176,6 +177,7 @@
         <div class="tag-list">
           {#each strain.terpenes as terpene}
             <div class="tag terpene-tag">
+              <TerpeneIcon icon={terpene.icon} size={18} />
               <span>{terpene.name}</span>
             </div>
           {/each}
