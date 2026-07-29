@@ -1,8 +1,32 @@
 # PotSpot -- Production Deployment Guide
 
-## Proxmox LXC (Recommended -- 5 minute deploy)
+## Proxmox LXC (Recommended)
 
-### Easiest: Community-Scripts style one-liner
+Three deployment paths, from fastest to most customizable:
+
+### Option A: Pre-built Template (fastest -- seconds to deploy)
+
+Build the template once, then clone infinite instances with zero build time.
+Docker images are pre-compiled -- services start in seconds.
+
+**Build the template (one-time, on Proxmox host):**
+```bash
+sudo bash deploy/build-template.sh
+```
+
+**Deploy a clone from the template:**
+```bash
+# Clone (template ID defaults to 900)
+pct clone 900 201 --hostname my-potspot --full 1
+pct start 201
+
+# Run first-boot setup (generates fresh secrets, starts services)
+pct exec 201 -- env DOMAIN=potspot.example.com bash /opt/potspot/init.sh
+```
+
+The init script prompts for your domain, optionally OAuth credentials, generates unique secrets, and starts the stack. Nothing is shared between clones.
+
+### Option B: Community-Scripts one-liner
 
 After creating a Docker LXC via [community-scripts.org](https://community-scripts.org/scripts):
 
@@ -12,35 +36,31 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/dep
 ```
 
 This interactive script follows the community-scripts pattern:
-- Checks Docker/Docker Compose
-- Prompts for your domain name
+- Checks/installs Docker and Docker Compose
+- Prompts for your domain name and Caddy ports
 - Optionally configures Google OAuth
 - Generates secure random secrets
 - Clones the repo, builds and starts the full stack
 - Creates an `update_potspot` command for future updates
 - Supports install / update / uninstall workflows
 
-### Option A: Use Community-Scripts Docker LXC
+### Option C: Automated Proxmox CT creation
 
-From your Proxmox host, run:
+From your Proxmox host, creates a fresh Debian 12 LXC and deploys PotSpot into it:
+
 ```bash
-# Set your domain
 export DOMAIN=potspot.yourdomain.com
-
-# Run the automated deployer (creates CT + installs + starts)
 sudo bash deploy/proxmox-deploy.sh
 ```
 
-This creates a Debian 12 LXC container (2 CPU, 2GB RAM, 20GB disk), installs Docker, clones the repo, generates secrets, and starts the full stack.
-
-### Option B: Deploy inside an existing LXC/VPS
+### Option D: Deploy inside an existing LXC/VPS
 
 SSH into your container and run:
 ```bash
 curl -sSL https://raw.githubusercontent.com/cpntodd/PotSpot/main/deploy/setup.sh | sudo DOMAIN=potspot.yourdomain.com bash
 ```
 
-### After deployment
+### After deployment (Options B/C/D)
 
 1. Point DNS A record for your domain to the container's IP
 2. Wait for Let's Encrypt to issue the certificate (automatic via Caddy, ~30s)
