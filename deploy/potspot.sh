@@ -97,14 +97,29 @@ function update() {
 # CHECK DOCKER
 # ==============================================================================
 function check_docker() {
+  # Install Docker if missing
   if ! command -v docker &>/dev/null; then
-    msg_error "Docker is not installed. Please use the Docker LXC template first. Exiting."
-    exit 10
+    msg_info "Docker not found. Installing Docker..."
+    export DEBIAN_FRONTEND=noninteractive
+    curl -fsSL https://get.docker.com | sh > /dev/null 2>&1 || {
+      msg_error "Failed to install Docker automatically. Install it manually: https://docs.docker.com/engine/install/"
+      exit 10
+    }
+    systemctl enable --now docker > /dev/null 2>&1 || true
+    msg_ok "Docker installed"
   fi
+
+  # Install Docker Compose plugin if missing
   if ! docker compose version &>/dev/null; then
-    msg_error "Docker Compose plugin is not available. Please install it before running this script. Exiting."
-    exit 10
+    msg_info "Docker Compose plugin not found. Installing..."
+    apt-get update -qq > /dev/null 2>&1
+    apt-get install -y -qq docker-compose-plugin > /dev/null 2>&1 || {
+      msg_error "Failed to install docker-compose-plugin. Install it manually."
+      exit 10
+    }
+    msg_ok "Docker Compose plugin installed"
   fi
+
   msg_ok "Docker $(docker --version | cut -d' ' -f3 | tr -d ',') and Docker Compose are available"
 }
 
