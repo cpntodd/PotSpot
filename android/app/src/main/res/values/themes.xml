@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PotSpot" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorBackground">#1e1e1e</item>
+        <item name="android:textColorPrimary">#d4d4d4</item>
+        <item name="android:colorAccent">#f09040</item>
+        <item name="android:statusBarColor">#1e1e1e</item>
+        <item name="android:navigationBarColor">#1e1e1e</item>
+    </style>
+</resources>

@@ -1,0 +1,45 @@
+# PotSpot -- .gitignore
+
+# Rust
+backend/target/
+backend/**/*.rs.bk
+backend/Cargo.lock
+
+# Node / SvelteKit
+web/node_modules/
+web/build/
+web/.svelte-kit/
+web/.env
+web/vite.config.ts.timestamp-*
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Environment
+.env
+*.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker/backup/
+
+# MinIO data (dev)
+docker/minio_data/

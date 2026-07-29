@@ -1,0 +1,32 @@
+# Stage 1: Build
+FROM rust:1.80-alpine AS builder
+
+RUN apk add --no-cache musl-dev pkgconfig openssl-dev
+
+WORKDIR /app
+
+# Cache dependencies
+COPY Cargo.toml Cargo.lock* ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release 2>/dev/null || true
+RUN rm -rf src
+
+# Build actual source
+COPY . .
+RUN cargo build --release
+
+# Stage 2: Runtime
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /app/target/release/potspot-api /app/potspot-api
+COPY --from=builder /app/migrations /app/migrations
+
+EXPOSE 3000
+
+USER nobody
+
+CMD ["/app/potspot-api"]

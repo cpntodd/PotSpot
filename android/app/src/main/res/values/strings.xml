@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">PotSpot</string>
+    <string name="age_gate_title">Age Verification</string>
+    <string name="age_gate_message">You must be 18 years or older to use this app.</string>
+    <string name="age_gate_confirm">I am 18 or older</string>
+    <string name="age_gate_deny">Leave</string>
+    <string name="disclaimer">
+        Cannabis legality varies by jurisdiction. It is your responsibility
+        to understand and comply with local laws. PotSpot does not facilitate
+        the purchase, sale, or distribution of cannabis.
+    </string>
+</resources>

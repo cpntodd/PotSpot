@@ -1,0 +1,28 @@
+# Caddyfile -- PotSpot production reverse proxy
+
+potspot.example.com {
+    # API reverse proxy
+    handle /api/* {
+        reverse_proxy api:3000
+    }
+
+    # Web frontend (static SPA)
+    handle {
+        root * /srv/web
+        try_files {path} /index.html
+        file_server
+    }
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    # Enable compression
+    encode gzip zstd
+}
