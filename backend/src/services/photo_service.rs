@@ -8,8 +8,8 @@ use std::io::Cursor;
 const ALLOWED_MIME_TYPES: &[&str] = &["image/jpeg", "image/png", "image/webp"];
 
 /// Maximum file sizes.
-pub const MAX_PRIMARY_PHOTO_SIZE: usize = 10 * 1024 * 1024; // 10 MB
-pub const MAX_REVIEW_PHOTO_SIZE: usize = 1 * 1024 * 1024;   // 1 MB
+pub const MAX_PRIMARY_PHOTO_SIZE: usize = 20 * 1024 * 1024; // 20 MB
+pub const MAX_REVIEW_PHOTO_SIZE: usize = 20 * 1024 * 1024;   // 20 MB
 
 /// Validate that the uploaded file is a supported image type and within size limits.
 pub fn validate_photo(data: &[u8], mime_type: &str, is_primary: bool) -> anyhow::Result<()> {

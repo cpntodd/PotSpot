@@ -300,18 +300,31 @@ async fn upload_photo(
             AppError::BadRequest(format!("Failed to read upload: {}", e))
         })?;
 
-        crate::services::photo_service::validate_photo(&data, &content_type, false)?;
+        crate::services::photo_service::validate_photo(&data, &content_type, false)
+            .map_err(|e| AppError::BadRequest(e.to_string()))?;
 
         let photo_id = uuid::Uuid::new_v4();
         let s3_key = format!("strains/{}/{}.webp", strain_id, photo_id);
         let thumb_key = format!("strains/{}/{}_thumb.webp", strain_id, photo_id);
 
         // Strip EXIF, resize, upload
-        let processed = crate::services::photo_service::strip_exif(&data)?;
-        let thumbnail = crate::services::photo_service::generate_thumbnail(&processed)?;
+        let processed = crate::services::photo_service::strip_exif(&data)
+            .map_err(|e| AppError::BadRequest(format!("Invalid image: {}", e)))?;
+        let thumbnail = crate::services::photo_service::generate_thumbnail(&processed)
+            .map_err(|e| AppError::Internal(e))?;
 
-        crate::s3::upload_object(&state.config, &s3_key, &processed, "image/webp").await?;
-        crate::s3::upload_object(&state.config, &thumb_key, &thumbnail, "image/webp").await?;
+        crate::s3::upload_object(&state.config, &s3_key, &processed, "image/webp")
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to upload photo to MinIO");
+                AppError::Internal(e)
+            })?;
+        crate::s3::upload_object(&state.config, &thumb_key, &thumbnail, "image/webp")
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "Failed to upload thumbnail to MinIO");
+                AppError::Internal(e)
+            })?;
 
         // Record in database
         sqlx::query(
